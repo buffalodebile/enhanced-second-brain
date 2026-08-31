@@ -28,13 +28,12 @@ def test_explicit_vault_loads_its_own_policy(tmp_path: Path) -> None:
     vault = tmp_path / "target"
     vault.mkdir()
     (vault / "second-brain.toml").write_text(
-        '[vault]\npath = "."\n[archive]\ninactive_days = 999\n[mcp]\nallow_writes = true\n',
+        '[vault]\npath = "."\n[archive]\ninactive_days = 999\n',
         encoding="utf-8",
     )
     settings = resolve_settings(vault, start=tmp_path)
     assert settings.config_file == vault / "second-brain.toml"
     assert settings.archive.inactive_days == 999
-    assert settings.mcp_allow_writes is True
 
 
 def test_migration_is_dry_run_idempotent_and_strict(vault: Path) -> None:

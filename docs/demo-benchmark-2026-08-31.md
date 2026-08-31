@@ -19,7 +19,7 @@ The cache was rebuilt immediately before the queries. The benchmark includes the
 Reproduce it with:
 
 ```bash
-esb --vault examples/demo-vault benchmark examples/demo-vault/benchmark.json --max-p95-ms 1000
+enhanced-second-brain --vault examples/demo-vault benchmark examples/demo-vault/benchmark.json --max-p95-ms 1000
 ```
 
 Hosted CI uses a 2000 ms threshold to tolerate runner variability while still requiring 100% top-five retrieval.

@@ -7,8 +7,8 @@
 Every new AI conversation starts from zero. You repeat your preferences, your projects, and the
 decisions you already made.
 
-Enhanced Second Brain gives local AI tools such as Codex a private memory made of ordinary
-Markdown files. It finds useful context automatically and keeps that memory tidy over time.
+Enhanced Second Brain turns ordinary Markdown files into a private memory that Codex can search,
+update, and clean up automatically.
 
 ## Install in a few minutes
 
@@ -26,9 +26,9 @@ Paste this one command into Terminal, then restart your AI tool:
 curl -fsSL https://github.com/buffalodebile/enhanced-second-brain/releases/latest/download/install.sh | sh
 ```
 
-The installer creates `SecondBrain` in your home folder. It also handles search and automatic
-maintenance. You do not need to install Python, Git, a skill, or a server. The tool keeps its own
-small runtime in a separate folder.
+The installer creates `SecondBrain` in your home folder and adds one standalone local app. There is
+no separate Python runtime, package manager, skill, plugin, agent, MCP server, database server, or
+command-line tool to install.
 
 Already have a notes folder? See [use an existing folder](docs/troubleshooting.md#use-an-existing-notes-folder).
 
@@ -42,13 +42,14 @@ Already have a notes folder? See [use an existing folder](docs/troubleshooting.m
 - **Freedom** — everything remains readable Markdown that you can copy, back up, or open in
   Obsidian.
 
-## How it works
+## The whole system
 
-1. You work with your AI as usual.
-2. Useful knowledge is saved into your Second Brain.
-3. Future conversations retrieve only the context they need.
+1. **Markdown + OKF** keeps every note structured, readable, and portable.
+2. **FTS5** finds the useful notes locally without embeddings or a GPU.
+3. **Daily maintenance** picks up new and edited notes and repairs their structure.
+4. **Monthly cleanup** moves cold, low-value notes to a reversible archive.
 
-The result improves over time instead of disappearing at the end of every chat.
+Codex is connected during installation, so you keep working normally. No extra agent is installed.
 
 ## Why "Enhanced"?
 
@@ -56,17 +57,17 @@ The result improves over time instead of disappearing at the end of every chat.
 is simple and powerful: let the AI maintain a persistent wiki instead of rediscovering the same
 documents for every question.
 
-Enhanced Second Brain makes that idea ready for daily use. It adds quick local search, portable
-notes, usage-aware ranking, automatic health checks, and reversible cleanup — while staying light
-enough for an ordinary laptop.
+Enhanced Second Brain makes that idea ready for daily use with only two moving parts: portable OKF
+notes and a disposable FTS5 search index. Usage-aware ranking and reversible cleanup run
+automatically around them.
 
 There is no cloud database, subscription, GPU, vector model, or always-running service.
 
 ## Good to know
 
 - Obsidian is optional. It is only an interface for the same Markdown files.
-- Automatic global memory currently works best with Codex. Other local agents can use the same
-  folder, but may need a one-time connection.
+- Automatic global memory currently works with Codex. Other local AI tools may need a one-time
+  connection to the same folder.
 - Browser-only chats cannot silently read files stored on your computer.
 - Back up important notes before migrating an existing folder.
 

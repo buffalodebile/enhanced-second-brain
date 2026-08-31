@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "enhanced-second-brain"
-version = "0.1.2"
-description = "Local-first OKF Markdown knowledge toolkit with FTS5, graph retrieval, usage telemetry, and reversible archival"
+version = "0.2.0"
+description = "Standalone local OKF and FTS5 second brain with automatic maintenance and reversible archival"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}
 authors = [{name = "Enhanced Second Brain contributors"}]
-keywords = ["second-brain", "okf", "fts5", "knowledge-management", "mcp"]
+keywords = ["second-brain", "okf", "fts5", "knowledge-management"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: Apache Software License",
@@ -21,13 +21,11 @@ classifiers = [
 ]
 dependencies = [
   "filelock>=3.13",
-  "networkx>=3.2",
   "PyYAML>=6.0.1",
 ]
 
 [project.optional-dependencies]
-mcp = ["mcp>=2,<3"]
-dev = ["mcp>=2,<3", "pytest>=8", "pytest-cov>=5"]
+dev = ["pytest>=8", "pytest-cov>=5", "pyinstaller>=6.11"]
 
 [project.scripts]
 esb = "enhanced_second_brain.cli:main"

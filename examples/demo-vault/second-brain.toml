@@ -3,7 +3,6 @@ path = "."
 
 [retrieval]
 max_results = 5
-graph_depth = 3
 
 [usage.weights]
 injected = 0.25
@@ -21,6 +20,3 @@ minimum_backlinks = 2
 remote = "origin"
 main_branch = "main"
 snapshot_branch = "backup-snapshot"
-
-[mcp]
-allow_writes = false

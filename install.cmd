@@ -1,10 +1,8 @@
 @echo off
 setlocal EnableExtensions
 
-set "ESB_VERSION=0.1.2"
-set "ESB_UV_VERSION=0.12.7"
-set "ESB_PACKAGE=https://github.com/buffalodebile/enhanced-second-brain/releases/download/v%ESB_VERSION%/enhanced_second_brain-%ESB_VERSION%-py3-none-any.whl"
-if defined ESB_PACKAGE_OVERRIDE set "ESB_PACKAGE=%ESB_PACKAGE_OVERRIDE%"
+set "ESB_VERSION=0.2.0"
+set "ESB_ENGINE_URL=https://github.com/buffalodebile/enhanced-second-brain/releases/download/v%ESB_VERSION%/enhanced-second-brain-windows-x64.exe"
 
 if defined ESB_INSTALL_HOME (
   set "ESB_HOME=%ESB_INSTALL_HOME%"
@@ -20,30 +18,20 @@ if defined ESB_VAULT_PATH (
 
 echo.
 echo Installing Enhanced Second Brain...
-if defined ESB_UV_OVERRIDE (
-  set "UV_EXE=%ESB_UV_OVERRIDE%"
+mkdir "%ESB_HOME%" >nul 2>&1
+set "ESB_ENGINE=%ESB_HOME%\enhanced-second-brain.exe"
+if defined ESB_ENGINE_OVERRIDE (
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Copy-Item -LiteralPath $env:ESB_ENGINE_OVERRIDE -Destination $env:ESB_ENGINE -Force"
 ) else (
-  set "UV_EXE=%ESB_HOME%\bootstrap\uv.exe"
-  if not exist "%ESB_HOME%\bootstrap\uv.exe" (
-    mkdir "%ESB_HOME%\bootstrap" >nul 2>&1
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$env:UV_UNMANAGED_INSTALL='%ESB_HOME%\bootstrap'; $env:UV_NO_MODIFY_PATH='1'; irm https://astral.sh/uv/%ESB_UV_VERSION%/install.ps1 | iex"
-    if errorlevel 1 goto :failed
-  )
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$target=$env:ESB_ENGINE + '.download'; Invoke-WebRequest -Uri $env:ESB_ENGINE_URL -OutFile $target -UseBasicParsing; Move-Item -LiteralPath $target -Destination $env:ESB_ENGINE -Force"
 )
-
-if not exist "%ESB_HOME%\runtime\Scripts\python.exe" (
-  "%UV_EXE%" venv --python 3.13 "%ESB_HOME%\runtime"
-  if errorlevel 1 goto :failed
-)
-
-"%UV_EXE%" pip install --python "%ESB_HOME%\runtime\Scripts\python.exe" --upgrade "%ESB_PACKAGE%"
 if errorlevel 1 goto :failed
 
 if /I "%ESB_INSTALL_DRY_RUN%"=="1" (
   if not defined CODEX_HOME set "CODEX_HOME=%ESB_HOME%\codex-test"
-  "%ESB_HOME%\runtime\Scripts\esb.exe" --vault "%ESB_VAULT%" install --dry-run-automation --codex-home "%CODEX_HOME%"
+  "%ESB_ENGINE%" --vault "%ESB_VAULT%" install --dry-run-automation --codex-home "%CODEX_HOME%"
 ) else (
-  "%ESB_HOME%\runtime\Scripts\esb.exe" --vault "%ESB_VAULT%" install
+  "%ESB_ENGINE%" --vault "%ESB_VAULT%" install
 )
 if errorlevel 1 goto :failed
 

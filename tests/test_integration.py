@@ -9,8 +9,8 @@ from enhanced_second_brain.cli import main
 from enhanced_second_brain.config import resolve_settings
 from enhanced_second_brain.installer import (
     _agent_command,
+    connect_ai,
     install,
-    install_agent_integrations,
 )
 from enhanced_second_brain.okf import audit_vault
 from enhanced_second_brain.service import cite, read_page, search, upsert_page
@@ -67,10 +67,10 @@ def test_one_command_install_adopts_legacy_markdown(tmp_path: Path) -> None:
     assert result["preflight_backup"]
     assert (Path(result["preflight_backup"]) / "concepts" / "legacy.md").exists()
     assert (vault / "AGENTS.md").exists()
-    assert (vault / "CLAUDE.md").exists()
-    mcp_config = (vault / ".codex" / "config.toml").read_text(encoding="utf-8")
-    assert "[mcp_servers.enhanced-second-brain]" in mcp_config
-    assert str(vault).replace("\\", "\\\\") in mcp_config
+    assert " --vault " in (vault / "AGENTS.md").read_text(encoding="utf-8")
+    assert "`esb " not in (vault / "AGENTS.md").read_text(encoding="utf-8")
+    assert not (vault / "CLAUDE.md").exists()
+    assert not (vault / ".codex" / "config.toml").exists()
     global_agents = codex_home / "AGENTS.md"
     assert str(vault) in global_agents.read_text(encoding="utf-8")
     assert result["automation"]["installed"] is False
@@ -78,7 +78,7 @@ def test_one_command_install_adopts_legacy_markdown(tmp_path: Path) -> None:
     assert audit_vault(vault, strict=True)["valid"]
     second = install(vault, automation=False, codex_home=codex_home)
     assert second["migration"]["count"] == 0
-    assert second["agent_integrations"]["changed"] == []
+    assert second["ai_connection"]["changed"] == []
     assert main(["--vault", str(vault), "prune", "apply", "--all-candidates"]) == 0
 
 
@@ -133,13 +133,10 @@ def test_global_agent_commands_are_shell_safe() -> None:
     assert posix == ("'/opt/enhanced brain/esb' --vault '/home/example/knowledge base'")
 
 
-def test_standard_install_does_not_require_mcp(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_standard_install_connects_without_plugins(tmp_path: Path) -> None:
     vault = tmp_path / "brain"
     codex_home = tmp_path / "codex-home"
-    monkeypatch.setattr("enhanced_second_brain.installer.find_spec", lambda _name: None)
-    result = install_agent_integrations(vault, codex_home=codex_home)
-    assert result["mcp_configured"] is False
+    result = connect_ai(vault, codex_home=codex_home)
+    assert result["changed"]
     assert not (vault / ".codex" / "config.toml").exists()
     assert (vault / "AGENTS.md").exists()

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import json
 import os
 import shlex
 import shutil
 from datetime import UTC, datetime
-from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
@@ -15,14 +13,17 @@ from .index import rebuild
 from .okf import audit_vault, migrate_vault
 from .utility import persist_scores
 
-INSTRUCTION_BLOCK = """<!-- enhanced-second-brain:start -->
+
+def _instruction_block(vault: Path, executable: str) -> str:
+    command = _agent_command(vault, executable)
+    return f"""<!-- enhanced-second-brain:start -->
 ## Enhanced Second Brain — automatic context
 
-- Before answering any request that may concern prior work, decisions, preferences, projects, or internal names, run `esb index query "<the user's question>"` from this vault.
-- Read only relevant results with `esb page read <path>`. Use `esb graph` only for paths, dependencies, hubs, clusters, bridges, or multi-hop questions.
-- After using a page in an answer, run `esb usage record cited <path>`.
-- After creating durable knowledge, use `esb page upsert` and run `esb reconcile`.
-- Markdown/Enhanced OKF is authoritative. The FTS5 cache is local and reconstructible. Do not use QMD, embeddings, a GPU service, or a vector daemon.
+- Before answering any request that may concern prior work, decisions, preferences, projects, or internal names, run `{command} index query "<the user's question>"`.
+- Read only relevant results with `{command} page read <path>`.
+- After using a page in an answer, run `{command} usage record cited <path>`.
+- After creating durable knowledge, use `{command} page upsert` and run `{command} reconcile`.
+- Markdown/Enhanced OKF is authoritative. FTS5 is a local reconstructible cache. Do not add QMD, embeddings, a GPU service, a vector daemon, a graph service, or MCP.
 <!-- enhanced-second-brain:end -->
 """
 
@@ -46,10 +47,10 @@ def _global_instruction_block(vault: Path, executable: str) -> str:
 ## Enhanced Second Brain — automatic global context
 
 - Before answering any request that may concern prior work, decisions, preferences, projects, or internal names, run `{command} index query "<the user's question>"`.
-- Read only relevant results with `{command} page read <path>`. Use graph commands only for structural or multi-hop questions.
+- Read only relevant results with `{command} page read <path>`.
 - After using a page in an answer, run `{command} usage record cited <path>`.
 - After creating durable knowledge, use `{command} page upsert` and run `{command} reconcile`.
-- Markdown/Enhanced OKF is authoritative. The FTS5 cache is local and reconstructible. Do not require a skill, QMD, embeddings, a GPU process, or a vector daemon.
+- Markdown/Enhanced OKF is authoritative. FTS5 is a local reconstructible cache. Do not require a skill, QMD, embeddings, a GPU process, a vector daemon, a graph service, or MCP.
 <!-- enhanced-second-brain-global:end -->
 """
 
@@ -75,43 +76,11 @@ def _append_managed(
     return True
 
 
-def install_agent_integrations(
-    vault: Path, *, codex_home: Path | None = None
-) -> dict[str, Any]:
+def connect_ai(vault: Path, *, codex_home: Path | None = None) -> dict[str, Any]:
     changed = []
-    conflicts = []
-    for relative in ("AGENTS.md", "CLAUDE.md"):
-        if _append_managed(vault / relative, INSTRUCTION_BLOCK):
-            changed.append(relative)
     executable = _executable()
-    codex = vault / ".codex" / "config.toml"
-    mcp_available = find_spec("mcp") is not None
-    mcp_block = f"""# enhanced-second-brain:start
-[mcp_servers.enhanced-second-brain]
-command = {json.dumps(executable)}
-args = ["--vault", {json.dumps(str(vault))}, "mcp"]
-cwd = {json.dumps(str(vault))}
-required = false
-default_tools_approval_mode = "writes"
-# enhanced-second-brain:end
-"""
-    if mcp_available:
-        existing_codex = codex.read_text(encoding="utf-8") if codex.exists() else ""
-        if (
-            "[mcp_servers.enhanced-second-brain]" in existing_codex
-            and "# enhanced-second-brain:start" not in existing_codex
-        ):
-            conflicts.append(
-                ".codex/config.toml already defines mcp_servers.enhanced-second-brain"
-            )
-        elif _append_managed(
-            codex,
-            mcp_block,
-            start="# enhanced-second-brain:start",
-            end="# enhanced-second-brain:end",
-        ):
-            changed.append(".codex/config.toml")
-
+    if _append_managed(vault / "AGENTS.md", _instruction_block(vault, executable)):
+        changed.append("AGENTS.md")
     if codex_home is None:
         configured_home = os.environ.get("CODEX_HOME")
         codex_home = (
@@ -134,11 +103,7 @@ default_tools_approval_mode = "writes"
         changed.append(str(global_target))
     return {
         "changed": changed,
-        "conflicts": conflicts,
-        "mcp_configured": mcp_available,
-        "files": ["AGENTS.md", "CLAUDE.md"]
-        + ([".codex/config.toml"] if mcp_available else [])
-        + [str(global_target)],
+        "files": ["AGENTS.md", str(global_target)],
     }
 
 
@@ -202,7 +167,7 @@ def install(
             "backup": str(backup_root) if backup_root else None,
             "audit": audit,
         }
-    integrations = install_agent_integrations(vault, codex_home=codex_home)
+    ai_connection = connect_ai(vault, codex_home=codex_home)
     result = {
         "passed": True,
         "vault": str(vault),
@@ -211,7 +176,7 @@ def install(
         "audit": audit,
         "index": rebuild(settings),
         "utility": persist_scores(settings),
-        "agent_integrations": integrations,
+        "ai_connection": ai_connection,
         "automation": install_automation(settings, dry_run=dry_run_automation)
         if automation
         else {"installed": False, "reason": "disabled"},

@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from . import __version__
 from .config import Settings
 from .index import query, rebuild
 
@@ -50,7 +51,7 @@ def run(
         "date": datetime.now(UTC).date().isoformat(),
         "machine": platform.machine(),
         "os": platform.platform(),
-        "python": platform.python_version(),
+        "engine": __version__,
         "cases": len(cases),
         "top_k": top_k,
         "hits": hits,

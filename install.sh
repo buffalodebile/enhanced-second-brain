@@ -1,35 +1,34 @@
 #!/usr/bin/env sh
 set -eu
 
-ESB_VERSION="0.1.2"
-ESB_UV_VERSION="0.12.7"
-ESB_PACKAGE_DEFAULT="https://github.com/buffalodebile/enhanced-second-brain/releases/download/v${ESB_VERSION}/enhanced_second_brain-${ESB_VERSION}-py3-none-any.whl"
-ESB_PACKAGE="${ESB_PACKAGE_OVERRIDE:-$ESB_PACKAGE_DEFAULT}"
+ESB_VERSION="0.2.0"
 ESB_HOME="${ESB_INSTALL_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}/enhanced-second-brain}"
 ESB_VAULT="${ESB_VAULT_PATH:-$HOME/SecondBrain}"
 
 printf '\n%s\n' "Installing Enhanced Second Brain..."
-if [ -n "${ESB_UV_OVERRIDE:-}" ]; then
-    UV="$ESB_UV_OVERRIDE"
+case "$(uname -s)-$(uname -m)" in
+    Darwin-arm64|Darwin-aarch64) ASSET="enhanced-second-brain-macos-arm64" ;;
+    Darwin-x86_64) ASSET="enhanced-second-brain-macos-x64" ;;
+    Linux-x86_64) ASSET="enhanced-second-brain-linux-x64" ;;
+    *) printf '%s\n' "Unsupported operating system or processor: $(uname -s) $(uname -m)" >&2; exit 1 ;;
+esac
+
+mkdir -p "$ESB_HOME"
+ENGINE="$ESB_HOME/enhanced-second-brain"
+if [ -n "${ESB_ENGINE_OVERRIDE:-}" ]; then
+    cp "$ESB_ENGINE_OVERRIDE" "$ENGINE"
 else
-    UV="$ESB_HOME/bootstrap/uv"
-    if [ ! -x "$UV" ]; then
-        mkdir -p "$ESB_HOME/bootstrap"
-        curl -LsSf "https://astral.sh/uv/${ESB_UV_VERSION}/install.sh" | env UV_UNMANAGED_INSTALL="$ESB_HOME/bootstrap" UV_NO_MODIFY_PATH=1 sh
-    fi
+    DOWNLOAD="$ENGINE.download.$$"
+    curl -fsSL "https://github.com/buffalodebile/enhanced-second-brain/releases/download/v${ESB_VERSION}/${ASSET}" -o "$DOWNLOAD"
+    mv "$DOWNLOAD" "$ENGINE"
 fi
-
-if [ ! -x "$ESB_HOME/runtime/bin/python" ]; then
-    "$UV" venv --python 3.13 "$ESB_HOME/runtime"
-fi
-
-"$UV" pip install --python "$ESB_HOME/runtime/bin/python" --upgrade "$ESB_PACKAGE"
+chmod +x "$ENGINE"
 
 if [ "${ESB_INSTALL_DRY_RUN:-0}" = "1" ]; then
     CODEX_TEST_HOME="${CODEX_HOME:-$ESB_HOME/codex-test}"
-    "$ESB_HOME/runtime/bin/esb" --vault "$ESB_VAULT" install --dry-run-automation --codex-home "$CODEX_TEST_HOME"
+    "$ENGINE" --vault "$ESB_VAULT" install --dry-run-automation --codex-home "$CODEX_TEST_HOME"
 else
-    "$ESB_HOME/runtime/bin/esb" --vault "$ESB_VAULT" install
+    "$ENGINE" --vault "$ESB_VAULT" install
 fi
 
 printf '\n%s\n' "Enhanced Second Brain is ready."

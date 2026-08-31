@@ -29,6 +29,8 @@ def _run(command: list[str]) -> None:
 
 
 def _executable() -> str:
+    if getattr(sys, "frozen", False):
+        return str(Path(sys.executable).resolve())
     script = "esb.exe" if os.name == "nt" else "esb"
     candidates = [shutil.which("esb"), str(Path(sys.executable).with_name(script))]
     try:
@@ -40,7 +42,7 @@ def _executable() -> str:
         if candidate and Path(candidate).is_file():
             return str(Path(candidate).resolve())
     raise ESBError(
-        "The esb launcher was not found. Run the easy installer again or use pipx/uv."
+        "The Enhanced Second Brain application was not found. Run the installer again."
     )
 
 

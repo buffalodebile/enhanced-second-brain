@@ -10,9 +10,11 @@ enabled = true
 remote = "origin"
 ```
 
-Set this only after verifying the remote is private and access-controlled. Then rerun `esb --vault /path/to/brain install`. Manual `esb backup` remains an explicit operator action.
+Set this only after verifying the remote is private and access-controlled, then rerun the easy
+installer. Manual backup remains an advanced operation in the [engine reference](engine-reference.md).
 
-`esb backup` first runs a strict Enhanced OKF audit. It pushes the existing local `main` commit and verifies the remote SHA. It never creates a main-branch commit from dirty files.
+The backup operation first runs a strict Enhanced OKF audit. It pushes the existing local `main`
+commit and verifies the remote SHA. It never creates a main-branch commit from dirty files.
 
 For a dirty worktree, it creates an isolated snapshot commit through a temporary `GIT_INDEX_FILE`:
 
@@ -32,9 +34,9 @@ Secret-like untracked filenames stop the snapshot. This is a guardrail, not a re
 Clone the private repository, select `main` for validated knowledge or `backup-snapshot` for the last dirty snapshot, install the toolkit, and run:
 
 ```bash
-esb --vault /restored/vault okf audit
-esb --vault /restored/vault index rebuild
-esb --vault /restored/vault doctor
+enhanced-second-brain --vault /restored/vault okf audit
+enhanced-second-brain --vault /restored/vault index rebuild
+enhanced-second-brain --vault /restored/vault doctor
 ```
 
 The FTS cache is deliberately absent and reconstructs from Markdown. Test a clean clone regularly; a successful push does not prove that every path is restorable on another operating system.

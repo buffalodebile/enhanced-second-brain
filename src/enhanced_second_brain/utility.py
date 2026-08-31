@@ -2,13 +2,32 @@ from __future__ import annotations
 
 import json
 import math
+from collections import Counter
 from datetime import UTC, datetime
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .config import Settings
-from .graph import backlinks
-from .pages import iter_page_paths, parse_markdown
+from .pages import iter_page_paths, page_links, parse_markdown, resolve_link
 from .usage import aggregate
+
+
+def backlinks(vault: Path) -> Counter[str]:
+    """Count incoming Markdown links without a graph dependency."""
+    pages = [parse_markdown(path, vault) for path in iter_page_paths(vault)]
+    known: dict[str, str] = {}
+    for page in pages:
+        stem = PurePosixPath(page.relative_path).with_suffix("").as_posix().lower()
+        known[stem] = page.relative_path
+        known[PurePosixPath(stem).name] = page.relative_path
+        known[str(page.metadata.get("title") or "").lower()] = page.relative_path
+    incoming: Counter[str] = Counter({page.relative_path: 0 for page in pages})
+    for page in pages:
+        for raw in page_links(page):
+            target = resolve_link(page, raw, known)
+            if target and target != page.relative_path:
+                incoming[target] += 1
+    return incoming
 
 
 def _parse_date(value: Any, fallback: datetime) -> datetime:

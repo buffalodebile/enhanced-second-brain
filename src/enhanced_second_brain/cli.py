@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sqlite3
 import sys
 from pathlib import Path
@@ -13,7 +12,6 @@ from .backup import backup
 from .benchmark import run as run_benchmark
 from .config import DEFAULT_TOML, Settings, ensure_vault, resolve_settings
 from .errors import ESBError
-from .graph import bridges, clusters, hubs, impact, path
 from .index import query, rebuild, results_as_dict, status, update
 from .installer import install as install_toolkit
 from .okf import audit_vault, migrate_vault
@@ -77,11 +75,9 @@ def _doctor(settings: Settings) -> dict[str, Any]:
         memory.close()
     return {
         "version": __version__,
-        "python": sys.version.split()[0],
         "vault": str(settings.vault),
         "config": str(settings.config_file) if settings.config_file else None,
         "fts5": has_fts5,
-        "git": shutil.which("git"),
         "okf": audit_vault(settings.vault, strict=True),
         "index": status(settings),
     }
@@ -122,20 +118,6 @@ def _parser() -> argparse.ArgumentParser:
     index.add_parser("status")
     index.add_parser("rebuild")
 
-    graph = commands.add_parser("graph").add_subparsers(
-        dest="graph_command", required=True
-    )
-    path_parser = graph.add_parser("path")
-    path_parser.add_argument("source")
-    path_parser.add_argument("target")
-    impact_parser = graph.add_parser("impact")
-    impact_parser.add_argument("page")
-    impact_parser.add_argument("--depth", type=int, default=3)
-    for name in ("hubs", "bridges"):
-        child = graph.add_parser(name)
-        child.add_argument("--limit", type=int, default=10)
-    graph.add_parser("clusters")
-
     page = commands.add_parser("page").add_subparsers(
         dest="page_command", required=True
     )
@@ -173,7 +155,6 @@ def _parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--top-k", type=int, default=5)
     benchmark.add_argument("--max-p95-ms", type=float)
     commands.add_parser("backup")
-    commands.add_parser("mcp")
     return parser
 
 
@@ -204,16 +185,6 @@ def dispatch(args: argparse.Namespace) -> Any:
         if args.index_command == "rebuild":
             return rebuild(settings)
         return status(settings)
-    if args.command == "graph":
-        if args.graph_command == "path":
-            return path(settings.vault, args.source, args.target)
-        if args.graph_command == "impact":
-            return impact(settings.vault, args.page, depth=args.depth)
-        if args.graph_command == "hubs":
-            return hubs(settings.vault, limit=args.limit)
-        if args.graph_command == "bridges":
-            return bridges(settings.vault, limit=args.limit)
-        return clusters(settings.vault)
     if args.command == "page":
         if args.page_command == "read":
             return read_page(settings, args.path)
@@ -265,11 +236,6 @@ def dispatch(args: argparse.Namespace) -> Any:
         )
     if args.command == "backup":
         return backup(settings)
-    if args.command == "mcp":
-        from .mcp_server import run
-
-        run(settings)
-        return None
     raise ESBError(f"Unsupported command: {args.command}")
 
 

@@ -22,4 +22,7 @@ A page qualifies only when all conditions hold:
 - utility at or below the cold threshold;
 - no hard protection.
 
-Hard protections cover core, verified, confidential, rejected, project-hub, and sufficiently linked pages. `esb prune candidates` is always read-only. `esb prune apply path.md` performs a fresh strict OKF audit and eligibility check, adds archive metadata, then moves content to `_archives/pruned/<date>/`. An explicitly scheduled policy may use `esb prune apply --all-candidates`; it still revalidates every page and only moves eligible content. `esb prune restore` moves one page back. No command automatically deletes knowledge.
+Hard protections cover core, verified, confidential, rejected, project-hub, and sufficiently linked
+pages. The monthly task performs a fresh strict OKF audit and eligibility check, adds archive
+metadata, then moves eligible content to `_archives/pruned/<date>/`. Restore remains available
+through the [internal engine](engine-reference.md). Nothing automatically deletes knowledge.

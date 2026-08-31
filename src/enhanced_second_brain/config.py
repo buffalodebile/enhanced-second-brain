@@ -13,7 +13,6 @@ path = "."
 
 [retrieval]
 max_results = 5
-graph_depth = 3
 
 [usage.weights]
 injected = 0.25
@@ -33,8 +32,6 @@ remote = "origin"
 main_branch = "main"
 snapshot_branch = "backup-snapshot"
 
-[mcp]
-allow_writes = false
 """
 
 
@@ -67,11 +64,9 @@ class Settings:
     vault: Path
     config_file: Path | None
     max_results: int = 5
-    graph_depth: int = 3
     usage: UsageConfig = field(default_factory=UsageConfig)
     archive: ArchiveConfig = field(default_factory=ArchiveConfig)
     backup: BackupConfig = field(default_factory=BackupConfig)
-    mcp_allow_writes: bool = False
 
 
 def _nearest_config(start: Path) -> Path | None:
@@ -123,7 +118,6 @@ def resolve_settings(
     weights = data.get("usage", {}).get("weights", {})
     archive = data.get("archive", {})
     backup = data.get("backup", {})
-    mcp = data.get("mcp", {})
     defaults = UsageConfig().weights
     merged_weights = {
         name: float(weights.get(name, value)) for name, value in defaults.items()
@@ -132,7 +126,6 @@ def resolve_settings(
         vault=resolved,
         config_file=config_file,
         max_results=int(retrieval.get("max_results", 5)),
-        graph_depth=int(retrieval.get("graph_depth", 3)),
         usage=UsageConfig(merged_weights),
         archive=ArchiveConfig(
             inactive_days=int(archive.get("inactive_days", 240)),
@@ -147,7 +140,6 @@ def resolve_settings(
             main_branch=str(backup.get("main_branch", "main")),
             snapshot_branch=str(backup.get("snapshot_branch", "backup-snapshot")),
         ),
-        mcp_allow_writes=bool(mcp.get("allow_writes", False)),
     )
 
 

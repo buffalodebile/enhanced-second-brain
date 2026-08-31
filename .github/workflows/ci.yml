@@ -37,48 +37,64 @@ jobs:
       - run: python -m venv /tmp/esb-smoke
       - run: /tmp/esb-smoke/bin/pip install .
       - run: /tmp/esb-smoke/bin/python -m enhanced_second_brain --version
-      - run: /tmp/esb-smoke/bin/python -c "import importlib.util; assert importlib.util.find_spec('mcp') is None"
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install --dry-run-automation --codex-home /tmp/esb-codex-home
       - run: test ! -e /tmp/new-brain/.codex/config.toml
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain doctor
 
-  easy-install:
+  standalone:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            name: enhanced-second-brain-linux-x64
+            asset: dist/enhanced-second-brain-linux-x64
+          - os: windows-latest
+            name: enhanced-second-brain-windows-x64
+            asset: dist/enhanced-second-brain-windows-x64.exe
+          - os: macos-latest
+            name: enhanced-second-brain-macos-arm64
+            asset: dist/enhanced-second-brain-macos-arm64
+          - os: macos-15-intel
+            name: enhanced-second-brain-macos-x64
+            asset: dist/enhanced-second-brain-macos-x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-      - name: Test the macOS/Linux installer
+      - run: python -m pip install . pyinstaller
+      - run: python -m PyInstaller --onefile --name "${{ matrix.name }}" standalone.py
+      - name: Test the standalone macOS/Linux application
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          ESB_PACKAGE_OVERRIDE=. \
-          ESB_UV_OVERRIDE=uv \
+          ESB_ENGINE_OVERRIDE="$PWD/${{ matrix.asset }}" \
           ESB_INSTALL_HOME="$RUNNER_TEMP/esb-easy" \
           ESB_VAULT_PATH="$RUNNER_TEMP/SecondBrain" \
           CODEX_HOME="$RUNNER_TEMP/codex-home" \
           ESB_INSTALL_DRY_RUN=1 \
           sh install.sh
-          "$RUNNER_TEMP/esb-easy/runtime/bin/esb" --version
-      - name: Test the Windows double-click installer
+          "$RUNNER_TEMP/esb-easy/enhanced-second-brain" --version
+          test -z "$(find "$RUNNER_TEMP/esb-easy" -type f -name 'python*' -print -quit)"
+      - name: Test the standalone Windows application
         if: runner.os == 'Windows'
         shell: cmd
         run: |
-          set "ESB_PACKAGE_OVERRIDE=."
-          set "ESB_UV_OVERRIDE=uv"
+          set "ESB_ENGINE_OVERRIDE=%CD%\${{ matrix.asset }}"
           set "ESB_INSTALL_HOME=%RUNNER_TEMP%\esb-easy"
           set "ESB_VAULT_PATH=%RUNNER_TEMP%\SecondBrain"
           set "CODEX_HOME=%RUNNER_TEMP%\codex-home"
           set "ESB_INSTALL_DRY_RUN=1"
           set "ESB_INSTALL_NONINTERACTIVE=1"
           call install.cmd
-          "%RUNNER_TEMP%\esb-easy\runtime\Scripts\esb.exe" --version
+          "%RUNNER_TEMP%\esb-easy\enhanced-second-brain.exe" --version
+          for /r "%RUNNER_TEMP%\esb-easy" %%F in (python*.exe) do exit /b 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.asset }}
 
   secret-scan:
     runs-on: ubuntu-latest
@@ -89,3 +105,21 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, smoke, standalone, secret-scan]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: enhanced-second-brain-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish standalone release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release-assets/* install.cmd install.sh --generate-notes --title "Enhanced Second Brain $GITHUB_REF_NAME"
