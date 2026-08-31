@@ -1,10 +1,26 @@
 # Agent and MCP integration
 
-Agents can call `esb` directly or connect to its local MCP stdio bridge. No provider-specific SDK is required. `esb install` writes vault-level `AGENTS.md` and `CLAUDE.md`, a project-scoped `.codex/config.toml`, and a managed global Codex instruction block. Codex can therefore query the selected vault from other repositories without an Agent Skill. Existing instruction content is preserved.
+Agents call `esb` directly after the standard installation. No provider-specific SDK or Agent Skill
+is required. `esb install` writes vault-level `AGENTS.md` and `CLAUDE.md` plus a managed global
+Codex instruction block. Codex can therefore query the selected vault from other repositories.
+Existing instruction content is preserved.
 
-Codex reads project-scoped `.codex/config.toml` only for trusted projects. Trusting the vault is an intentional one-time Codex security decision; the installer does not bypass it. The global instruction block still provides the zero-skill CLI workflow outside the vault. Restart an already-running agent session after installation so it reloads instructions.
+Restart an already-running agent session after installation so it reloads instructions.
 
-## MCP tools
+## Optional MCP bridge
+
+MCP is not part of the default installation. The normal automatic Codex workflow does not need it.
+Install the extra only if an agent client specifically supports MCP tools:
+
+```bash
+python -m pip install --user "enhanced-second-brain[mcp] @ https://github.com/buffalodebile/enhanced-second-brain/releases/download/v0.1.1/enhanced_second_brain-0.1.1-py3-none-any.whl"
+python -m enhanced_second_brain --vault ~/second-brain install
+```
+
+The second command adds the project-scoped `.codex/config.toml` entry. Codex loads that entry only
+after the vault is trusted, which is an intentional one-time security decision.
+
+The bridge exposes:
 
 - `search`
 - `read_page`

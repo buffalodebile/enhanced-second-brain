@@ -7,7 +7,11 @@ import pytest
 from enhanced_second_brain.benchmark import run
 from enhanced_second_brain.cli import main
 from enhanced_second_brain.config import resolve_settings
-from enhanced_second_brain.installer import _agent_command, install
+from enhanced_second_brain.installer import (
+    _agent_command,
+    install,
+    install_agent_integrations,
+)
 from enhanced_second_brain.okf import audit_vault
 from enhanced_second_brain.service import cite, read_page, search, upsert_page
 from enhanced_second_brain.usage import aggregate
@@ -127,3 +131,15 @@ def test_global_agent_commands_are_shell_safe() -> None:
         "/home/example/knowledge base", "/opt/enhanced brain/esb", windows=False
     )
     assert posix == ("'/opt/enhanced brain/esb' --vault '/home/example/knowledge base'")
+
+
+def test_standard_install_does_not_require_mcp(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    vault = tmp_path / "brain"
+    codex_home = tmp_path / "codex-home"
+    monkeypatch.setattr("enhanced_second_brain.installer.find_spec", lambda _name: None)
+    result = install_agent_integrations(vault, codex_home=codex_home)
+    assert result["mcp_configured"] is False
+    assert not (vault / ".codex" / "config.toml").exists()
+    assert (vault / "AGENTS.md").exists()

@@ -36,7 +36,10 @@ jobs:
           python-version: "3.13"
       - run: python -m venv /tmp/esb-smoke
       - run: /tmp/esb-smoke/bin/pip install .
+      - run: /tmp/esb-smoke/bin/python -m enhanced_second_brain --version
+      - run: /tmp/esb-smoke/bin/python -c "import importlib.util; assert importlib.util.find_spec('mcp') is None"
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install --dry-run-automation --codex-home /tmp/esb-codex-home
+      - run: test ! -e /tmp/new-brain/.codex/config.toml
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain doctor
 
   secret-scan:

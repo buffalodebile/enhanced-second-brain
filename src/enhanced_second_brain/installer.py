@@ -5,6 +5,7 @@ import os
 import shlex
 import shutil
 from datetime import UTC, datetime
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
@@ -84,6 +85,7 @@ def install_agent_integrations(
             changed.append(relative)
     executable = _executable()
     codex = vault / ".codex" / "config.toml"
+    mcp_available = find_spec("mcp") is not None
     mcp_block = f"""# enhanced-second-brain:start
 [mcp_servers.enhanced-second-brain]
 command = {json.dumps(executable)}
@@ -93,21 +95,22 @@ required = false
 default_tools_approval_mode = "writes"
 # enhanced-second-brain:end
 """
-    existing_codex = codex.read_text(encoding="utf-8") if codex.exists() else ""
-    if (
-        "[mcp_servers.enhanced-second-brain]" in existing_codex
-        and "# enhanced-second-brain:start" not in existing_codex
-    ):
-        conflicts.append(
-            ".codex/config.toml already defines mcp_servers.enhanced-second-brain"
-        )
-    elif _append_managed(
-        codex,
-        mcp_block,
-        start="# enhanced-second-brain:start",
-        end="# enhanced-second-brain:end",
-    ):
-        changed.append(".codex/config.toml")
+    if mcp_available:
+        existing_codex = codex.read_text(encoding="utf-8") if codex.exists() else ""
+        if (
+            "[mcp_servers.enhanced-second-brain]" in existing_codex
+            and "# enhanced-second-brain:start" not in existing_codex
+        ):
+            conflicts.append(
+                ".codex/config.toml already defines mcp_servers.enhanced-second-brain"
+            )
+        elif _append_managed(
+            codex,
+            mcp_block,
+            start="# enhanced-second-brain:start",
+            end="# enhanced-second-brain:end",
+        ):
+            changed.append(".codex/config.toml")
 
     if codex_home is None:
         configured_home = os.environ.get("CODEX_HOME")
@@ -132,12 +135,10 @@ default_tools_approval_mode = "writes"
     return {
         "changed": changed,
         "conflicts": conflicts,
-        "files": [
-            "AGENTS.md",
-            "CLAUDE.md",
-            ".codex/config.toml",
-            str(global_target),
-        ],
+        "mcp_configured": mcp_available,
+        "files": ["AGENTS.md", "CLAUDE.md"]
+        + ([".codex/config.toml"] if mcp_available else [])
+        + [str(global_target)],
     }
 
 
