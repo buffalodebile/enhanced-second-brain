@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: python -m pip install -U pip
+      - run: python -m pip install -e ".[dev]"
+      - run: pytest
+      - run: esb --vault examples/demo-vault okf audit
+      - run: esb --vault examples/demo-vault benchmark examples/demo-vault/benchmark.json --max-p95-ms 2000
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m venv /tmp/esb-smoke
+      - run: /tmp/esb-smoke/bin/pip install .
+      - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install --dry-run-automation --codex-home /tmp/esb-codex-home
+      - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain doctor
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

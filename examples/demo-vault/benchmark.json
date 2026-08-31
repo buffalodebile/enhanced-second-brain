@@ -1,0 +1,7 @@
+[
+  {"query": "offline field observations without network", "expected": "concepts/offline-field-notes.md"},
+  {"query": "estuary salinity sensor calibration", "expected": "concepts/tidal-sensor-calibration.md"},
+  {"query": "seasonal wildlife migration mapping", "expected": "concepts/migratory-corridor.md"},
+  {"query": "Aurora ecology project hub", "expected": "projects/aurora/aurora.md"},
+  {"query": "fictional habitat survey fieldwork", "expected": "projects/aurora/aurora.md"}
+]

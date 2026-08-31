@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.example.enhanced-second-brain</string>
+  <key>ProgramArguments</key>
+  <array><string>/ABSOLUTE/PATH/TO/esb</string><string>--vault</string><string>/ABSOLUTE/PATH/TO/second-brain</string><string>reconcile</string></array>
+  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardOutPath</key><string>/tmp/enhanced-second-brain.log</string>
+  <key>StandardErrorPath</key><string>/tmp/enhanced-second-brain.err</string>
+</dict>
+</plist>

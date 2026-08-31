@@ -1,0 +1,26 @@
+[vault]
+path = "."
+
+[retrieval]
+max_results = 5
+graph_depth = 3
+
+[usage.weights]
+injected = 0.25
+opened = 1.0
+cited = 2.0
+
+[archive]
+inactive_days = 240
+max_effective_usage = 3.0
+minimum_age_days = 60
+cold_threshold = 0.15
+minimum_backlinks = 2
+
+[backup]
+remote = "origin"
+main_branch = "main"
+snapshot_branch = "backup-snapshot"
+
+[mcp]
+allow_writes = false

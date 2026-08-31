@@ -1,0 +1,6 @@
+[Unit]
+Description=Reconcile Enhanced Second Brain
+
+[Service]
+Type=oneshot
+ExecStart=/ABSOLUTE/PATH/TO/esb --vault /ABSOLUTE/PATH/TO/second-brain reconcile
