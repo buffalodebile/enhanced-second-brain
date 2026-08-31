@@ -2,115 +2,74 @@
 
 [![CI](https://github.com/buffalodebile/enhanced-second-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/buffalodebile/enhanced-second-brain/actions/workflows/ci.yml)
 
-**Give your AI a memory you own.**
+## Give your AI a memory that survives the chat
 
-Enhanced Second Brain turns a folder of Markdown notes into a private memory for AI tools such as
-Codex. Your AI can find past decisions, reuse what you learned, and keep the folder healthy without
-you manually sorting everything.
+Every new AI conversation starts from zero. You repeat your preferences, your projects, and the
+decisions you already made.
 
-Your notes stay ordinary files on your computer. No cloud database, GPU, vector model, Obsidian
-plugin, or always-running server is required.
+Enhanced Second Brain gives local AI tools such as Codex a private memory made of ordinary
+Markdown files. It finds useful context automatically and keeps that memory tidy over time.
 
-## Why use it?
+## Install in a few minutes
 
-- **Stop repeating yourself.** Your agent can recover relevant decisions and context from previous
-  work.
-- **Find the right note quickly.** Search is local, lightweight, and updated when files change.
-- **Keep the useful knowledge.** Real usage helps rank pages; old low-value pages are archived, not
-  deleted.
-- **Take it anywhere.** The source of truth is a portable folder of readable Markdown files.
-- **Avoid lock-in.** Obsidian is a nice optional interface, not a requirement.
+### Windows
 
-Karpathy's [LLM Wiki idea](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
-describes knowledge as a persistent artifact that compounds instead of being rediscovered in every
-chat. Enhanced Second Brain packages that idea into an installable, automatically maintained
-system.
+1. [Download the Windows installer](https://github.com/buffalodebile/enhanced-second-brain/releases/latest/download/install.cmd).
+2. Double-click `install.cmd`.
+3. Restart Codex once.
 
-## Install
+### macOS or Linux
 
-You only need [Python 3.11+](https://www.python.org/downloads/). Then run:
+Paste this one command into Terminal, then restart your AI tool:
 
 ```bash
-python -m pip install --user "https://github.com/buffalodebile/enhanced-second-brain/releases/download/v0.1.1/enhanced_second_brain-0.1.1-py3-none-any.whl"
-python -m enhanced_second_brain --vault ~/second-brain install
+curl -fsSL https://github.com/buffalodebile/enhanced-second-brain/releases/latest/download/install.sh | sh
 ```
 
-On Windows, use `py` instead of `python` if needed:
+The installer creates `SecondBrain` in your home folder. It also handles search and automatic
+maintenance. You do not need to install Python, Git, a skill, or a server. The tool keeps its own
+small runtime in a separate folder.
 
-```powershell
-py -m pip install --user "https://github.com/buffalodebile/enhanced-second-brain/releases/download/v0.1.1/enhanced_second_brain-0.1.1-py3-none-any.whl"
-py -m enhanced_second_brain --vault "$HOME\second-brain" install
-```
+Already have a notes folder? See [use an existing folder](docs/troubleshooting.md#use-an-existing-notes-folder).
 
-Already have notes? Replace `~/second-brain` with their folder. The installer makes a safety copy
-before changing existing Markdown.
+## What you get
 
-That is the whole setup. Restart your local AI agent once, then keep working normally. There is no
-skill to invoke and no server to start by hand.
+- **Less repetition** — your AI can recover previous decisions and project context.
+- **Faster answers** — it searches the useful notes instead of scanning everything.
+- **A cleaner memory** — new and edited files are picked up automatically; cold notes are archived,
+  never deleted.
+- **Privacy** — your notes and search stay on your computer.
+- **Freedom** — everything remains readable Markdown that you can copy, back up, or open in
+  Obsidian.
 
-> Today the automatic global connection is built for Codex. Claude Code and other local agents get
-> vault instructions and can use the same local bridge, but their global configuration may require
-> a one-time connection. Browser-only chats cannot read files stored on your computer.
+## How it works
 
-## What happens automatically?
+1. You work with your AI as usual.
+2. Useful knowledge is saved into your Second Brain.
+3. Future conversations retrieve only the context they need.
 
-```text
-Your Markdown notes -> fast local search -> useful context for your AI
-          ^                                      |
-          `------ update, score, archive --------'
-```
+The result improves over time instead of disappearing at the end of every chat.
 
-The installer:
+## Why "Enhanced"?
 
-1. creates or adopts your notes folder;
-2. makes every note portable and machine-readable;
-3. builds the local search index;
-4. connects the folder to supported agents;
-5. schedules maintenance and reversible archival.
+[Karpathy's LLM Wiki idea](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
+is simple and powerful: let the AI maintain a persistent wiki instead of rediscovering the same
+documents for every question.
 
-After that, new and edited notes are picked up incrementally. Daily maintenance checks the folder;
-monthly maintenance moves cold, low-value pages into a dated archive. It never automatically
-deletes your knowledge. Remote backup remains off until you explicitly choose a private Git
-repository.
+Enhanced Second Brain makes that idea ready for daily use. It adds quick local search, portable
+notes, usage-aware ranking, automatic health checks, and reversible cleanup — while staying light
+enough for an ordinary laptop.
 
-## Why is it "enhanced"?
+There is no cloud database, subscription, GPU, vector model, or always-running service.
 
-A normal notes folder stores documents. Enhanced Second Brain adds the parts needed for reliable AI
-memory:
+## Good to know
 
-| Normal notes | Enhanced Second Brain |
-|---|---|
-| Files are manually searched | The agent retrieves relevant context locally |
-| Notes slowly become stale | Existing pages can be updated and checked |
-| Every page looks equally useful | Actual use influences ranking |
-| Cleanup risks deleting knowledge | Cold pages move to a reversible archive |
-| Moving tools can break the system | Markdown remains the portable source of truth |
+- Obsidian is optional. It is only an interface for the same Markdown files.
+- Automatic global memory currently works best with Codex. Other local agents can use the same
+  folder, but may need a one-time connection.
+- Browser-only chats cannot silently read files stored on your computer.
+- Back up important notes before migrating an existing folder.
 
-## Under the hood (optional)
+Want the implementation details? Read the [technical overview](docs/technical-overview.md).
 
-You do not need to understand this section to use the tool.
-
-- **OKF v0.2** gives notes a consistent, portable structure.
-- **SQLite FTS5** provides fast keyword search without embeddings, a GPU, or a background database
-  service.
-- **A link graph** answers relationship and multi-step questions only when needed.
-- **Local usage signals** improve ranking without storing your prompts.
-- **MCP stdio** is an optional private pipe between an agent and the tool. It is not a web server,
-  opens no port, and is started by the agent only when needed.
-
-FTS5 is the best default for this project's lightweight, local-first goal; it is not universally
-better than semantic search. A benchmark is included so you can test retrieval on your own notes.
-
-## Learn more
-
-- [How agents connect](docs/agent-and-mcp.md)
-- [How search and benchmarks work](docs/retrieval-and-benchmarks.md)
-- [Automatic maintenance](docs/automation.md)
-- [Portable note format](docs/okf-profile.md)
-- [Private backup and restore](docs/backup-restore.md)
-- [Privacy and threat model](docs/threat-model.md)
-- [Troubleshooting](docs/troubleshooting.md)
-- [CLI reference](docs/cli.md)
-
-Enhanced Second Brain is an early public release. Back up an important folder before adopting or
-migrating it. Licensed under Apache-2.0.
+Apache-2.0 licensed.

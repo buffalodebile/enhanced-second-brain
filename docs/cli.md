@@ -1,6 +1,6 @@
 # Command-line reference
 
-Most people only need the two commands shown in the README. This page is for manual operation,
+Most people only need the easy installer shown in the README. This page is for manual operation,
 debugging, and agent integrations.
 
 Every command accepts a vault through `--vault`, `ESB_VAULT_PATH`, or the nearest

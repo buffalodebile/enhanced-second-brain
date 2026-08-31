@@ -5,6 +5,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import sysconfig
 from pathlib import Path
 from typing import Any
 
@@ -28,15 +29,19 @@ def _run(command: list[str]) -> None:
 
 
 def _executable() -> str:
-    command = shutil.which("esb")
-    if not command:
-        sibling = Path(sys.executable).with_name(
-            "esb.exe" if os.name == "nt" else "esb"
-        )
-        command = str(sibling) if sibling.exists() else None
-    if not command:
-        raise ESBError("The esb executable is not available on PATH")
-    return str(Path(command).resolve())
+    script = "esb.exe" if os.name == "nt" else "esb"
+    candidates = [shutil.which("esb"), str(Path(sys.executable).with_name(script))]
+    try:
+        user_scheme = sysconfig.get_preferred_scheme("user")
+        candidates.append(str(Path(sysconfig.get_path("scripts", user_scheme)) / script))
+    except (KeyError, TypeError):
+        pass
+    for candidate in candidates:
+        if candidate and Path(candidate).is_file():
+            return str(Path(candidate).resolve())
+    raise ESBError(
+        "The esb launcher was not found. Run the easy installer again or use pipx/uv."
+    )
 
 
 def _has_private_backup_target(settings: Settings) -> bool:

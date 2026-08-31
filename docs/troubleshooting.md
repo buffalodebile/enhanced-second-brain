@@ -1,5 +1,32 @@
 # Troubleshooting
 
+## Use an existing notes folder
+
+The easy installer creates `SecondBrain` in your home folder by default. To adopt another folder,
+set `ESB_VAULT_PATH` before running it.
+
+Windows PowerShell:
+
+```powershell
+$env:ESB_VAULT_PATH = "C:\path\to\your\notes"
+.\install.cmd
+```
+
+macOS or Linux:
+
+```bash
+curl -fsSL https://github.com/buffalodebile/enhanced-second-brain/releases/latest/download/install.sh | ESB_VAULT_PATH="$HOME/path/to/notes" sh
+```
+
+The installer creates a dated safety copy of Markdown files that need migration.
+
+## The easy installer cannot download its runtime
+
+Check the internet connection and rerun the installer. It downloads a private `uv` bootstrap from
+Astral and uses it to install an isolated Python runtime. It does not change the system Python or
+shell configuration. Corporate networks may need to allow `astral.sh`, GitHub release downloads,
+and the Python standalone distribution host.
+
 ## “No vault configured”
 
 Pass `--vault`, set `ESB_VAULT_PATH`, or create `second-brain.toml`. The toolkit intentionally refuses to guess.

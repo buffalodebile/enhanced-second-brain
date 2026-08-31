@@ -10,11 +10,21 @@ Restart an already-running agent session after installation so it reloads instru
 ## Optional MCP bridge
 
 MCP is not part of the default installation. The normal automatic Codex workflow does not need it.
-Install the extra only if an agent client specifically supports MCP tools:
+Install the easy setup first. Add MCP only if an agent client specifically supports MCP tools.
+
+Windows PowerShell:
+
+```powershell
+& "$env:LOCALAPPDATA\EnhancedSecondBrain\runtime\Scripts\python.exe" -m pip install "enhanced-second-brain[mcp] @ https://github.com/buffalodebile/enhanced-second-brain/releases/download/v0.1.2/enhanced_second_brain-0.1.2-py3-none-any.whl"
+& "$env:LOCALAPPDATA\EnhancedSecondBrain\runtime\Scripts\esb.exe" --vault "$HOME\SecondBrain" install
+```
+
+macOS or Linux:
 
 ```bash
-python -m pip install --user "enhanced-second-brain[mcp] @ https://github.com/buffalodebile/enhanced-second-brain/releases/download/v0.1.1/enhanced_second_brain-0.1.1-py3-none-any.whl"
-python -m enhanced_second_brain --vault ~/second-brain install
+~/.local/share/enhanced-second-brain/runtime/bin/python -m pip install \
+  "enhanced-second-brain[mcp] @ https://github.com/buffalodebile/enhanced-second-brain/releases/download/v0.1.2/enhanced_second_brain-0.1.2-py3-none-any.whl"
+~/.local/share/enhanced-second-brain/runtime/bin/esb --vault ~/SecondBrain install
 ```
 
 The second command adds the project-scoped `.codex/config.toml` entry. Codex loads that entry only

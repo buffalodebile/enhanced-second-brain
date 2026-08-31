@@ -24,5 +24,6 @@ The operator and local OS account are trusted. The vault, cache, and stdio MCP p
 | Dirty backup corrupting work | Temporary Git index; real index, worktree, and `HEAD` remain untouched. |
 | Credentials in snapshots | Secret-like filename refusal plus repository secret scanning and push protection. |
 | Vault sent to a public remote | Backup scheduling requires explicit `backup.enabled = true`; a URL alone is never treated as proof of privacy. |
+| Installer supply chain | The easy installer downloads a pinned `uv` installer from Astral and an isolated Python runtime, then installs a versioned wheel from this repository's GitHub release. CI tests this path on all three operating systems. Inspect the short installer first if your environment forbids downloaded scripts. |
 
 Do not place raw secrets in Markdown. Secret scanners cannot prove that prose contains no sensitive business information.

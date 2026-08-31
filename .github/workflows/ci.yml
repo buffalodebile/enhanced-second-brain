@@ -42,6 +42,44 @@ jobs:
       - run: test ! -e /tmp/new-brain/.codex/config.toml
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain doctor
 
+  easy-install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - name: Test the macOS/Linux installer
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          ESB_PACKAGE_OVERRIDE=. \
+          ESB_UV_OVERRIDE=uv \
+          ESB_INSTALL_HOME="$RUNNER_TEMP/esb-easy" \
+          ESB_VAULT_PATH="$RUNNER_TEMP/SecondBrain" \
+          CODEX_HOME="$RUNNER_TEMP/codex-home" \
+          ESB_INSTALL_DRY_RUN=1 \
+          sh install.sh
+          "$RUNNER_TEMP/esb-easy/runtime/bin/esb" --version
+      - name: Test the Windows double-click installer
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          set "ESB_PACKAGE_OVERRIDE=."
+          set "ESB_UV_OVERRIDE=uv"
+          set "ESB_INSTALL_HOME=%RUNNER_TEMP%\esb-easy"
+          set "ESB_VAULT_PATH=%RUNNER_TEMP%\SecondBrain"
+          set "CODEX_HOME=%RUNNER_TEMP%\codex-home"
+          set "ESB_INSTALL_DRY_RUN=1"
+          set "ESB_INSTALL_NONINTERACTIVE=1"
+          call install.cmd
+          "%RUNNER_TEMP%\esb-easy\runtime\Scripts\esb.exe" --version
+
   secret-scan:
     runs-on: ubuntu-latest
     steps:
