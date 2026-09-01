@@ -35,6 +35,30 @@ for the human to configure.
 - **Freedom and sovereignty** — the context is a normal folder that can be copied, versioned,
   zipped, opened in another editor, or handed to another model.
 
+## Tested retrieval, without inflated claims
+
+On September 1, 2026, we generated **500 fictional OKF Markdown pages** and ran 20 distinct
+questions three times each on Windows 11 with an Intel Core i7-13620H. Both searchable methods found
+the expected page in the top five on all 60 measured queries.
+
+| Method | Correct top-five retrieval | Median local retrieval | What happens per query |
+|---|---:|---:|---|
+| AI without access to a second brain | 0/60 | Not comparable | It cannot retrieve a fictional private page it cannot access. |
+| Full Markdown scan | 60/60 | 224.931 ms | Reads and scores all 500 files again. |
+| **Enhanced Second Brain FTS5** | **60/60** | **180.274 ms** | Checks freshness, searches BM25, and returns at most five candidates. |
+
+In this test, FTS5 used **19.9% less median retrieval time**, or **1.25× the retrieval throughput**,
+than reading every Markdown file. The first index build took 3.895 seconds once; later searches used
+incremental synchronization. Returning five candidates instead of reading 500 file bodies also
+reduces the candidate set by 99% before the agent chooses what to open.
+
+These are deliberately local retrieval numbers, not a promise that every AI answer will be 19.9%
+faster. Model generation, network latency, hardware, corpus size, vocabulary, and alternative tools
+can dominate total response time. A plain exact-text tool may also beat FTS5 for a known filename or
+literal string; FTS5 is valuable here because it combines ranked retrieval, freshness, and usage
+tracking. See the [method and raw result](docs/comparison-benchmark-2026-09-01.md), then benchmark
+your own vault before making a broader claim.
+
 ## Markdown and OKF are used together
 
 OKF does not replace Markdown. [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
