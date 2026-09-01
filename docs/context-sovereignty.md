@@ -26,6 +26,7 @@ The toolkit improves access to the context; it never becomes the owner of that c
 | Attachments and referenced local files | A diagram, image, or document may be part of the knowledge. |
 | `second-brain.toml` | Retrieval, usage, and archival policy should survive the move. |
 | `_meta/usage.jsonl` | Usage history affects utility and future archival decisions. It contains event time, type, path, and weight—not prompts or answers. |
+| `_meta/maintenance.json` | Portable counters and timestamps let another agent continue the maintenance cadence. |
 | `enhanced-second-brain-bundle.json` | The manifest records every portable path, byte size, and SHA-256 checksum. It contains no absolute source path. |
 
 ## What it deliberately leaves behind
@@ -118,8 +119,8 @@ application then:
 4. extracts into a temporary sibling directory;
 5. runs the strict OKF audit before promoting that directory to the final vault path;
 6. rebuilds the local FTS5 index from Markdown;
-7. lets `install` generate paths, persistent agent instructions, and daily/monthly automation for
-   the new operating system;
+7. lets `install` generate paths, persistent agent instructions, and agent-driven maintenance for
+   the new machine;
 8. uses `doctor` to confirm OKF, FTS5, and the index.
 
 The original bundle remains unchanged. If validation fails, the final destination is not created.

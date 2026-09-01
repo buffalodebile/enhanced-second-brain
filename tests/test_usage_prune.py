@@ -27,6 +27,7 @@ def test_weighted_usage_is_locked_and_concurrent(settings, vault) -> None:
             future.result()
     assert len(events(vault)) == 20
     assert aggregate(settings)["concepts/used.md"]["effective_usage"] == 14.0
+    assert aggregate(settings)["concepts/used.md"]["decayed_effective_usage"] > 13.9
 
 
 def test_prune_safeguards_archive_and_restore(vault) -> None:

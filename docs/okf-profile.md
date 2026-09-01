@@ -57,6 +57,6 @@ updated: 2026-01-15T10:00:00+00:00
 See the [Aurora project](../projects/aurora/aurora.md).
 ```
 
-The daily maintenance pass performs deterministic migration and strict audit automatically. Operators
+The first agent request after the daily threshold performs deterministic migration and strict audit automatically. Operators
 can run the equivalent `okf migrate` and `okf audit` operations through the
 [internal engine](engine-reference.md) when diagnosing a vault.

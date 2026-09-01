@@ -19,6 +19,12 @@ injected = 0.25
 opened = 1.0
 cited = 2.0
 
+[maintenance]
+reconcile_after_hours = 24
+reconcile_after_turns = 50
+archive_review_after_days = 30
+backup_after_hours = 24
+
 [archive]
 inactive_days = 240
 max_effective_usage = 3.0
@@ -52,6 +58,14 @@ class ArchiveConfig:
 
 
 @dataclass(frozen=True)
+class MaintenanceConfig:
+    reconcile_after_hours: int = 24
+    reconcile_after_turns: int = 50
+    archive_review_after_days: int = 30
+    backup_after_hours: int = 24
+
+
+@dataclass(frozen=True)
 class BackupConfig:
     enabled: bool = False
     remote: str = "origin"
@@ -65,6 +79,7 @@ class Settings:
     config_file: Path | None
     max_results: int = 5
     usage: UsageConfig = field(default_factory=UsageConfig)
+    maintenance: MaintenanceConfig = field(default_factory=MaintenanceConfig)
     archive: ArchiveConfig = field(default_factory=ArchiveConfig)
     backup: BackupConfig = field(default_factory=BackupConfig)
 
@@ -116,6 +131,7 @@ def resolve_settings(
 
     retrieval = data.get("retrieval", {})
     weights = data.get("usage", {}).get("weights", {})
+    maintenance = data.get("maintenance", {})
     archive = data.get("archive", {})
     backup = data.get("backup", {})
     defaults = UsageConfig().weights
@@ -127,6 +143,18 @@ def resolve_settings(
         config_file=config_file,
         max_results=int(retrieval.get("max_results", 5)),
         usage=UsageConfig(merged_weights),
+        maintenance=MaintenanceConfig(
+            reconcile_after_hours=int(
+                maintenance.get("reconcile_after_hours", 24)
+            ),
+            reconcile_after_turns=int(
+                maintenance.get("reconcile_after_turns", 50)
+            ),
+            archive_review_after_days=int(
+                maintenance.get("archive_review_after_days", 30)
+            ),
+            backup_after_hours=int(maintenance.get("backup_after_hours", 24)),
+        ),
         archive=ArchiveConfig(
             inactive_days=int(archive.get("inactive_days", 240)),
             max_effective_usage=float(archive.get("max_effective_usage", 3.0)),

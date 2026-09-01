@@ -43,7 +43,7 @@ def _parse_date(value: Any, fallback: datetime) -> datetime:
 
 def scores(settings: Settings, *, now: datetime | None = None) -> list[dict[str, Any]]:
     now = now or datetime.now(UTC)
-    usage = aggregate(settings)
+    usage = aggregate(settings, now=now)
     incoming = backlinks(settings.vault)
     tier_weight = {"core": 1.0, "supporting": 0.65, "peripheral": 0.35}
     rows = []
@@ -54,7 +54,10 @@ def scores(settings: Settings, *, now: datetime | None = None) -> list[dict[str,
         age_days = max(0.0, (now - updated).total_seconds() / 86400)
         recent = math.exp(-math.log(2) * age_days / 180)
         effective = float(usage.get(page.relative_path, {}).get("effective_usage", 0.0))
-        usage_factor = min(1.0, math.log1p(effective) / math.log(11))
+        decayed_effective = float(
+            usage.get(page.relative_path, {}).get("decayed_effective_usage", 0.0)
+        )
+        usage_factor = min(1.0, math.log1p(decayed_effective) / math.log(11))
         importance = min(
             1.0,
             0.5 * tier_weight.get(str(page.metadata.get("tier", "supporting")), 0.65)
@@ -67,6 +70,7 @@ def scores(settings: Settings, *, now: datetime | None = None) -> list[dict[str,
                 "path": page.relative_path,
                 "strength": round(strength, 6),
                 "effective_usage": effective,
+                "decayed_effective_usage": decayed_effective,
                 "last_used": usage.get(page.relative_path, {}).get("last_used"),
                 "age_days": round(age_days, 1),
                 "backlinks": incoming.get(page.relative_path, 0),

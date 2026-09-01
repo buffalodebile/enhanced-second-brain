@@ -69,7 +69,8 @@ def candidates(
             not protections
             and row["age_days"] >= settings.archive.minimum_age_days
             and inactive_days >= settings.archive.inactive_days
-            and row["effective_usage"] <= settings.archive.max_effective_usage
+            and row["decayed_effective_usage"]
+            <= settings.archive.max_effective_usage
             and row["strength"] <= settings.archive.cold_threshold
         )
         if qualifies:

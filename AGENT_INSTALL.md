@@ -7,7 +7,7 @@ location of an existing notes folder, if they have one.
 ## Goal
 
 Install one standalone Enhanced Second Brain application, initialize or adopt the vault, enable
-automatic maintenance, connect the current agent, and verify the result. Do not ask the human to
+agent-driven automatic maintenance, connect the current agent, and verify the result. Do not ask the human to
 install Python, a package manager, a plugin, or a database server.
 
 ## Procedure
@@ -40,8 +40,9 @@ install Python, a package manager, a plugin, or a database server.
 7. Read the managed block written to `<vault>/AGENTS.md`. Connect that block to the current agent's
    native persistent-instruction mechanism so context lookup also works outside the vault. Preserve
    all existing user instructions and do not create a provider-specific dependency inside the vault.
-8. Verify that `doctor` reports `fts5: true`, a valid strict OKF audit, and an existing index. Verify
-   that daily reconciliation and monthly reversible archival were scheduled by the operating system.
+8. Run `<application> --vault <vault> maintenance run`. Verify that `doctor` reports `fts5: true`,
+   a valid strict OKF audit, an existing index, and maintenance state. Do not create operating-system
+   tasks unless the human explicitly requests unattended scheduling.
 9. Report the vault path, application path, verification result, and any limitation. Do not claim
    that browser-only chat interfaces can access local files.
 
@@ -66,7 +67,7 @@ choose a new path that does not already exist, and run:
 ```
 
 The first command verifies file checksums, safely restores the portable context, audits OKF, and
-rebuilds FTS5. `install` then regenerates machine-specific instructions and automation. Connect the
+rebuilds FTS5. `install` then regenerates machine-specific instructions and agent-driven maintenance. Connect the
 new managed instruction block to the current agent as in step 7. Never copy an old machine's agent
 instructions or search cache as a substitute for this regeneration.
 

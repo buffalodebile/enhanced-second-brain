@@ -75,10 +75,13 @@ def backup(settings: Settings) -> dict[str, Any]:
     _git(vault, "push", remote, f"{head_before}:refs/heads/{main}")
     if _remote_sha(vault, remote, main) != head_before:
         raise SafetyError("Remote main SHA does not match local HEAD")
-    usage = vault / "_meta" / "usage.jsonl"
+    private_state = [
+        vault / "_meta" / "usage.jsonl",
+        vault / "_meta" / "maintenance.json",
+    ]
     dirty = (
         bool(_git(vault, "status", "--porcelain=v1", "--untracked-files=all"))
-        or usage.exists()
+        or any(path.exists() for path in private_state)
     )
     if not dirty:
         return {"main": head_before, "snapshot": None, "dirty": False}
@@ -93,12 +96,14 @@ def backup(settings: Settings) -> dict[str, Any]:
         env["GIT_INDEX_FILE"] = str(index_path)
         _git(vault, "read-tree", head_before, env=env)
         _git(vault, "add", "-A", env=env)
-        if usage.exists():
-            _git(vault, "add", "-f", "--", "_meta/usage.jsonl", env=env)
+        for path in private_state:
+            if path.exists():
+                _git(vault, "add", "-f", "--", path.relative_to(vault).as_posix(), env=env)
         tree_one = _git(vault, "write-tree", env=env)
         _git(vault, "add", "-A", env=env)
-        if usage.exists():
-            _git(vault, "add", "-f", "--", "_meta/usage.jsonl", env=env)
+        for path in private_state:
+            if path.exists():
+                _git(vault, "add", "-f", "--", path.relative_to(vault).as_posix(), env=env)
         tree_two = _git(vault, "write-tree", env=env)
         if tree_one != tree_two:
             raise SafetyError("Worktree changed while building the snapshot")

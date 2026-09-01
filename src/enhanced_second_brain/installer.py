@@ -10,6 +10,7 @@ from typing import Any
 from .automation import _executable, install_automation
 from .config import DEFAULT_TOML, resolve_settings
 from .index import rebuild
+from .maintenance import initialize as initialize_maintenance
 from .okf import audit_vault, migrate_vault
 from .utility import persist_scores
 
@@ -20,9 +21,11 @@ def _instruction_block(vault: Path, executable: str) -> str:
 ## Enhanced Second Brain — automatic context
 
 - Before answering any request that may concern prior work, decisions, preferences, projects, or internal names, run `{command} index query "<the user's question>"`.
+- At the start of every user request, run `{command} maintenance run`. It performs only due deterministic work; ordinary turns are a cheap state check.
 - Read only relevant results with `{command} page read <path>`.
 - After using a page in an answer, run `{command} usage record cited <path>`.
 - After creating durable knowledge, use `{command} page upsert` and run `{command} reconcile`.
+- If `maintenance run` reports an archive review, read every candidate and its relationships. Preserve rare durable decisions even when they are old. Then run `{command} maintenance review [only-the-pages-that-are-truly-safe-to-archive]`; an empty selection records that nothing should move.
 - When the user asks for a portable copy, run `{command} reconcile`, then `{command} bundle export <private-destination.zip>` and report its SHA-256.
 - The OKF Markdown files are authoritative. FTS5 is a local, disposable search index.
 <!-- enhanced-second-brain:end -->
@@ -97,6 +100,8 @@ def _initialize(vault: Path) -> None:
         "_meta/usage.jsonl",
         "_meta/usage.jsonl.lock",
         "_meta/utility.json",
+        "_meta/maintenance.json",
+        "_meta/maintenance.json.lock",
     ]
     existing = (
         ignore.read_text(encoding="utf-8").splitlines() if ignore.exists() else []
@@ -112,7 +117,7 @@ def _initialize(vault: Path) -> None:
 def install(
     vault: Path,
     *,
-    automation: bool = True,
+    automation: bool = False,
     dry_run_automation: bool = False,
 ) -> dict[str, Any]:
     vault = vault.expanduser().resolve()
@@ -146,6 +151,7 @@ def install(
         "audit": audit,
         "index": rebuild(settings),
         "utility": persist_scores(settings),
+        "maintenance": initialize_maintenance(settings),
         "agent_instructions": agent_instructions,
         "automation": install_automation(settings, dry_run=dry_run_automation)
         if automation

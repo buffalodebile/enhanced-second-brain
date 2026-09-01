@@ -16,8 +16,9 @@ them.
   daemon. See [retrieval and benchmarks](retrieval-and-benchmarks.md).
 - **Local usage ledger:** records page injection, opening, and citation without storing prompts or
   answers. See [usage and archival](usage-and-archival.md).
-- **Native scheduling:** daily reconciliation and monthly reversible archival on Windows, macOS,
-  and Linux. See [automation](automation.md).
+- **Agent-driven maintenance:** a portable prompt counter and timestamps trigger reconciliation,
+  backup, and semantic archive review on the next request. Native scheduling is optional. See
+  [automation](automation.md).
 - **One standalone application:** CI bundles the engine separately for Windows, Linux, Intel Mac,
   and Apple Silicon Mac. The installing agent downloads that single versioned file and verifies its
   checksum. No separate runtime, package manager, plugin, or background database service is needed.
@@ -54,6 +55,6 @@ Archival moves eligible pages to a dated folder and never deletes them automatic
 is disabled until a private Git destination is explicitly enabled. Read the [threat model](threat-model.md)
 and [backup/restore guide](backup-restore.md) before connecting a real vault.
 
-The application has an internal command interface so local AI agents and the operating-system
-scheduler can operate it. End users do not need to learn it. Maintainers can read the
+The application has an internal command interface so local AI agents—and optionally an
+operating-system scheduler—can operate it. End users do not need to learn it. Maintainers can read the
 [engine reference](engine-reference.md).

@@ -15,6 +15,8 @@ from .config import DEFAULT_TOML, Settings, ensure_vault, resolve_settings
 from .errors import ESBError
 from .index import query, rebuild, results_as_dict, status, update
 from .installer import install as install_toolkit
+from .maintenance import reconcile, review_archive, run_turn
+from .maintenance import status as maintenance_status
 from .okf import audit_vault, migrate_vault
 from .prune import apply as apply_prune
 from .prune import candidates, restore
@@ -56,6 +58,8 @@ def _init(args: argparse.Namespace) -> dict[str, Any]:
         "_meta/usage.jsonl",
         "_meta/usage.jsonl.lock",
         "_meta/utility.json",
+        "_meta/maintenance.json",
+        "_meta/maintenance.json.lock",
     ]
     existing = (
         ignore.read_text(encoding="utf-8").splitlines() if ignore.exists() else []
@@ -81,6 +85,7 @@ def _doctor(settings: Settings) -> dict[str, Any]:
         "fts5": has_fts5,
         "okf": audit_vault(settings.vault, strict=True),
         "index": status(settings),
+        "maintenance": maintenance_status(settings),
     }
 
 
@@ -95,7 +100,8 @@ def _parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("init")
     install = commands.add_parser("install")
-    install.add_argument("--no-automation", action="store_true")
+    install.add_argument("--with-os-automation", action="store_true")
+    install.add_argument("--no-automation", action="store_true", help=argparse.SUPPRESS)
     install.add_argument(
         "--dry-run-automation", action="store_true", help=argparse.SUPPRESS
     )
@@ -150,6 +156,13 @@ def _parser() -> argparse.ArgumentParser:
     prune_restore.add_argument("path")
 
     commands.add_parser("reconcile")
+    maintenance = commands.add_parser("maintenance").add_subparsers(
+        dest="maintenance_command", required=True
+    )
+    maintenance.add_parser("run")
+    maintenance.add_parser("status")
+    maintenance_review = maintenance.add_parser("review")
+    maintenance_review.add_argument("paths", nargs="*")
     benchmark = commands.add_parser("benchmark")
     benchmark.add_argument("dataset", type=Path)
     benchmark.add_argument("--top-k", type=int, default=5)
@@ -171,9 +184,11 @@ def dispatch(args: argparse.Namespace) -> Any:
     if args.command == "install":
         if not args.vault:
             raise ESBError("install requires --vault PATH")
+        if args.with_os_automation and args.no_automation:
+            raise ESBError("Choose --with-os-automation or --no-automation, not both")
         return install_toolkit(
             Path(args.vault),
-            automation=not args.no_automation,
+            automation=args.with_os_automation and not args.no_automation,
             dry_run_automation=args.dry_run_automation,
         )
     if args.command == "bundle" and args.bundle_command == "restore":
@@ -229,17 +244,13 @@ def dispatch(args: argparse.Namespace) -> Any:
             raise ESBError("Provide page paths or --all-candidates")
         return apply_prune(settings, selected)
     if args.command == "reconcile":
-        migration = migrate_vault(settings.vault, write=True)
-        audit = audit_vault(settings.vault, strict=True)
-        if not audit["valid"]:
-            return {"passed": False, "migration": migration, "audit": audit}
-        return {
-            "passed": True,
-            "migration": migration,
-            "audit": audit,
-            "index": update(settings, verify_hashes=True),
-            "utility": persist_scores(settings),
-        }
+        return reconcile(settings)
+    if args.command == "maintenance":
+        if args.maintenance_command == "run":
+            return run_turn(settings)
+        if args.maintenance_command == "review":
+            return review_archive(settings, args.paths)
+        return maintenance_status(settings)
     if args.command == "benchmark":
         return run_benchmark(
             settings, args.dataset, top_k=args.top_k, max_p95_ms=args.max_p95_ms

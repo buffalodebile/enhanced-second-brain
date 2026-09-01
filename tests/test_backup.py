@@ -28,7 +28,9 @@ def test_backup_uses_isolated_index_and_includes_private_ledger(tmp_path: Path) 
     write_page(
         vault, "concepts/base.md", title="Base", description="Base page", body="# Base"
     )
-    (vault / ".gitignore").write_text("_meta/usage.jsonl\n", encoding="utf-8")
+    (vault / ".gitignore").write_text(
+        "_meta/usage.jsonl\n_meta/maintenance.json\n", encoding="utf-8"
+    )
     git(vault, "add", ".")
     git(vault, "commit", "-m", "initial")
     git(vault, "remote", "add", "origin", str(remote))
@@ -43,6 +45,9 @@ def test_backup_uses_isolated_index_and_includes_private_ledger(tmp_path: Path) 
     ledger.parent.mkdir(parents=True)
     ledger.write_text(
         '{"event":"opened","path":"concepts/base.md","weight":1}\n', encoding="utf-8"
+    )
+    (vault / "_meta" / "maintenance.json").write_text(
+        '{"total_turns": 4}\n', encoding="utf-8"
     )
     head_before = git(vault, "rev-parse", "HEAD")
     index_before = git(vault, "write-tree")
@@ -68,6 +73,7 @@ def test_backup_uses_isolated_index_and_includes_private_ledger(tmp_path: Path) 
     ).splitlines()
     assert "concepts/dirty.md" in snapshot_files
     assert "_meta/usage.jsonl" in snapshot_files
+    assert "_meta/maintenance.json" in snapshot_files
 
 
 def test_backup_captures_ignored_ledger_without_other_changes(tmp_path: Path) -> None:

@@ -37,7 +37,7 @@ jobs:
       - run: python -m venv /tmp/esb-smoke
       - run: /tmp/esb-smoke/bin/pip install .
       - run: /tmp/esb-smoke/bin/python -m enhanced_second_brain --version
-      - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install --dry-run-automation
+      - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install
       - run: test -f /tmp/new-brain/AGENTS.md
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain doctor
 
@@ -73,7 +73,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/esb-agent"
           cp "$PWD/${{ matrix.asset }}" "$RUNNER_TEMP/esb-agent/enhanced-second-brain"
           chmod +x "$RUNNER_TEMP/esb-agent/enhanced-second-brain"
-          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" install --dry-run-automation
+          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" install
+          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" maintenance run
           "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" doctor
           test -f "$RUNNER_TEMP/SecondBrain/AGENTS.md"
           test -z "$(find "$RUNNER_TEMP/esb-agent" -type f -name 'python*' -print -quit)"
@@ -86,7 +87,9 @@ jobs:
           New-Item -ItemType Directory -Path $appHome | Out-Null
           $engine = Join-Path $appHome 'enhanced-second-brain.exe'
           Copy-Item -LiteralPath '${{ matrix.asset }}' -Destination $engine
-          & $engine --vault $vault install --dry-run-automation
+          & $engine --vault $vault install
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $engine --vault $vault maintenance run
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & $engine --vault $vault doctor
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

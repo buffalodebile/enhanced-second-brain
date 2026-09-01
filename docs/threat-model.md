@@ -22,7 +22,7 @@ The operator and local OS account are trusted. The vault, FTS5 cache, and standa
 | Destructive cleanup | Strict eligibility, hard protections, move-only archives, explicit restore. |
 | Dirty backup corrupting work | Temporary Git index; real index, worktree, and `HEAD` remain untouched. |
 | Credentials in snapshots | Secret-like filename refusal plus repository secret scanning and push protection. |
-| Vault sent to a public remote | Backup scheduling requires explicit `backup.enabled = true`; a URL alone is never treated as proof of privacy. |
+| Vault sent to a public remote | Agent-driven or scheduled backup requires explicit `backup.enabled = true`; a URL alone is never treated as proof of privacy. |
 | Application supply chain | The installing agent downloads one versioned standalone application and verifies it against the release checksum. CI builds and executes every operating-system artifact. Review the public build workflow when the environment requires stronger provenance. |
 
 Do not place raw secrets in Markdown. Secret scanners cannot prove that prose contains no sensitive business information.

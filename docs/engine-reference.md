@@ -1,7 +1,7 @@
 # Internal engine reference
 
-Most people never need this page. The installing agent connects its instruction mechanism and
-schedules maintenance.
+Most people never need this page. The installing agent connects its instruction mechanism so
+maintenance advances naturally with agent requests.
 
 The standalone application exposes a small internal interface for AI tools, automation, recovery,
 and development:
@@ -15,6 +15,7 @@ enhanced-second-brain usage record
 enhanced-second-brain score
 enhanced-second-brain prune candidates|apply|restore
 enhanced-second-brain reconcile
+enhanced-second-brain maintenance run|status|review
 enhanced-second-brain benchmark
 enhanced-second-brain backup
 enhanced-second-brain bundle export|restore
@@ -22,5 +23,5 @@ enhanced-second-brain bundle export|restore
 
 Every operation accepts a vault through `--vault`, `ESB_VAULT_PATH`, or the nearest
 `second-brain.toml`. This is an implementation interface, not another dependency or service. The
-application is invoked only when a query or scheduled maintenance needs it; it does not remain
+application is invoked only when an agent request or optional scheduled maintenance needs it; it does not remain
 running in the background.

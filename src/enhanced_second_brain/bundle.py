@@ -42,6 +42,7 @@ EXCLUDED_FILES = {
     "agents.md",
     "claude.md",
     "_meta/usage.jsonl.lock",
+    "_meta/maintenance.json.lock",
     "_meta/utility.json",
     MANIFEST_NAME,
 }

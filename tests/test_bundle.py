@@ -40,6 +40,9 @@ def test_portable_bundle_round_trip_keeps_context_not_machine_state(
     usage = vault / "_meta" / "usage.jsonl"
     usage.parent.mkdir(parents=True)
     usage.write_text('{"event":"opened","path":"concepts/portable.md"}\n')
+    maintenance = vault / "_meta" / "maintenance.json"
+    maintenance.write_text('{"total_turns": 12}\n', encoding="utf-8")
+    (vault / "_meta" / "maintenance.json.lock").write_text("locked", encoding="utf-8")
     cache = vault / "_meta" / "cache" / "esb-fts.sqlite3"
     cache.parent.mkdir(parents=True)
     cache.write_bytes(b"disposable")
@@ -57,6 +60,8 @@ def test_portable_bundle_round_trip_keeps_context_not_machine_state(
         assert "_archives/pruned/2026-08-01/old.md" in names
         assert "references/diagram.bin" in names
         assert "_meta/usage.jsonl" in names
+        assert "_meta/maintenance.json" in names
+        assert "_meta/maintenance.json.lock" not in names
         assert "_meta/cache/esb-fts.sqlite3" not in names
         assert "AGENTS.md" not in names
         assert ".gitignore" not in names
@@ -74,6 +79,7 @@ def test_portable_bundle_round_trip_keeps_context_not_machine_state(
         .endswith("UTF-8 café survive.\n")
     )
     assert (restored / "_meta" / "usage.jsonl").exists()
+    assert (restored / "_meta" / "maintenance.json").exists()
     assert (restored / "_meta" / "cache" / "esb-fts.sqlite3").exists()
     assert not (restored / "AGENTS.md").exists()
     assert restored_result["audit"]["valid"] is True

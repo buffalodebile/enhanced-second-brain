@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from datetime import UTC, datetime
+import math
 from pathlib import Path
 from typing import Any
 
@@ -58,17 +59,46 @@ def events(vault: Path) -> list[dict[str, Any]]:
     return parsed
 
 
-def aggregate(settings: Settings) -> dict[str, dict[str, Any]]:
+def aggregate(
+    settings: Settings, *, now: datetime | None = None, half_life_days: int = 180
+) -> dict[str, dict[str, Any]]:
+    now = now or datetime.now(UTC)
     result: dict[str, dict[str, Any]] = defaultdict(
-        lambda: {"effective_usage": 0.0, "events": 0, "last_used": None}
+        lambda: {
+            "effective_usage": 0.0,
+            "decayed_effective_usage": 0.0,
+            "events": 0,
+            "last_used": None,
+        }
     )
     for item in events(settings.vault):
         row = result[item["path"]]
-        row["effective_usage"] += float(
-            item.get("weight", settings.usage.weights[item["event"]])
-        )
+        weight = float(item.get("weight", settings.usage.weights[item["event"]]))
+        row["effective_usage"] += weight
         row["events"] += 1
         timestamp = item.get("at")
+        parsed = None
+        if timestamp:
+            try:
+                parsed = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=UTC)
+            except ValueError:
+                parsed = None
+        if parsed is not None:
+            age_days = max(0.0, (now - parsed.astimezone(UTC)).total_seconds() / 86400)
+            row["decayed_effective_usage"] += weight * math.exp(
+                -math.log(2) * age_days / half_life_days
+            )
         if timestamp and (row["last_used"] is None or timestamp > row["last_used"]):
             row["last_used"] = timestamp
-    return dict(result)
+    return {
+        path: {
+            **row,
+            "effective_usage": round(row["effective_usage"], 6),
+            "decayed_effective_usage": round(
+                row["decayed_effective_usage"], 6
+            ),
+        }
+        for path, row in result.items()
+    }

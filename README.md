@@ -19,8 +19,9 @@ Send this message to any local AI agent that can access files and run commands:
 > Follow AGENT_INSTALL.md, use my existing notes folder if I provide one, and verify everything.
 
 That is the human installation flow. The agent detects the machine, downloads one verified
-standalone application, adopts or creates the knowledge folder, builds search, schedules maintenance,
-connects its own persistent instructions, and runs a health check.
+standalone application, adopts or creates the knowledge folder, builds search, connects its own
+persistent instructions, and runs a health check. Maintenance then happens naturally on future
+agent requests; no Windows task, cron job, or background service is created by default.
 
 There is no Windows installer to click and no runtime, package manager, plugin, or database service
 for the human to configure.
@@ -124,27 +125,38 @@ files. No GPU, embeddings, network request, or continuously running process is i
 
 ### During normal work
 
-The agent searches before answering context-dependent questions, records which pages were actually
-read or used, and distills durable new knowledge back into the relevant page. Raw conversation text
-is not blindly copied into the knowledge base.
+At the start of each request, the agent performs a tiny maintenance check. It searches before
+answering context-dependent questions, records which pages were actually read or used, and distills
+durable new knowledge back into the relevant page. Raw conversation text is not blindly copied into
+the knowledge base.
 
-### Daily maintenance
+An injected search result counts `0.25`, an opened page counts `1`, and a page actually used in an
+answer counts `2`. Older activity gradually loses weight, so something that was popular years ago
+does not stay permanently important. Links, confidence, importance tier, freshness, frequency, and
+last use are combined into the page's utility score.
 
-The operating system runs a short local reconciliation that:
+### Automatic catch-up
+
+The first agent request after 24 hours—or after 50 interactions—runs a short local reconciliation:
 
 1. brings new or edited Markdown into the OKF profile;
 2. validates required metadata and source structure;
 3. synchronizes and verifies the FTS5 index;
 4. recalculates page utility from real usage.
 
-It does not invent facts or rewrite meaning without a source and an agent judgment.
+Most requests only read one small state file, so there is no heavy maintenance on every prompt. The
+process does not invent facts or rewrite meaning without a source and an agent judgment.
 
-### Monthly cleanup
+### Agent-reviewed cleanup
 
 Pages become archive candidates only after at least 240 days without use, low effective usage, a
 minimum age, and a cold utility score. Important, verified, confidential, hub, and sufficiently
-linked pages are protected. Eligible pages move to a dated archive and can be restored; automatic
-deletion is never used.
+linked pages are protected. On the first request after 30 days, the agent reads each candidate and
+its relationships before selecting what can safely move. Eligible pages go to a dated archive and
+can be restored; automatic deletion is never used.
+
+Operating-system scheduling remains an explicit reliability option for unattended machines. It is
+not part of the default installation.
 
 ## Why this stack
 

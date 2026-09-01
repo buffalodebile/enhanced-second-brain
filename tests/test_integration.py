@@ -56,11 +56,7 @@ def test_one_command_install_adopts_legacy_markdown(tmp_path: Path) -> None:
         "---\ntitle: Legacy\ntags: [portable]\n---\n\n# Legacy\n\nExisting notes survive migration.\n",
         encoding="utf-8",
     )
-    result = install(
-        vault,
-        automation=True,
-        dry_run_automation=True,
-    )
+    result = install(vault)
     assert result["passed"]
     assert result["preflight_backup"]
     assert (Path(result["preflight_backup"]) / "concepts" / "legacy.md").exists()
@@ -68,7 +64,10 @@ def test_one_command_install_adopts_legacy_markdown(tmp_path: Path) -> None:
     assert " --vault " in (vault / "AGENTS.md").read_text(encoding="utf-8")
     assert "`esb " not in (vault / "AGENTS.md").read_text(encoding="utf-8")
     assert result["agent_instructions"]["files"] == ["AGENTS.md"]
-    assert result["automation"]["installed"] is False
+    assert result["automation"] == {"installed": False, "reason": "disabled"}
+    instructions = (vault / "AGENTS.md").read_text(encoding="utf-8")
+    assert "maintenance run" in instructions
+    assert "maintenance review" in instructions
     assert result["index"]["added"] == 1
     assert audit_vault(vault, strict=True)["valid"]
     second = install(vault, automation=False)
@@ -133,3 +132,10 @@ def test_standard_install_connects_without_plugins(tmp_path: Path) -> None:
     result = write_agent_instructions(vault)
     assert result["changed"]
     assert (vault / "AGENTS.md").exists()
+
+
+def test_os_automation_is_explicit_opt_in(tmp_path: Path) -> None:
+    vault = tmp_path / "brain"
+    result = install(vault, automation=True, dry_run_automation=True)
+    assert result["automation"]["installed"] is False
+    assert result["automation"]["platform"]

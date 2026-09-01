@@ -1,19 +1,35 @@
-# Cross-platform automation
+# Agent-driven automation
 
-The installing agent asks the standalone application to create the native user-level schedule.
-End users do not need to configure or run it. Daily verified backup is included only when a Git
-remote exists **and** `[backup] enabled = true` explicitly confirms that the destination is private.
-Repository visibility cannot be inferred from a URL.
+The default installation creates no Task Scheduler, launchd, cron, or systemd entry. Instead, the
+managed agent instructions run `maintenance run` at the start of each request. That command advances
+one interaction counter and reads `_meta/maintenance.json` under a file lock.
 
-The installed schedule uses this cadence:
+The default cadence is:
 
-- Daily: `reconcile`; optionally `backup` to a private Git remote.
-- Monthly: `prune apply --all-candidates`. The first run waits for its calendar time rather than running during installation. Eligibility is conservative and archival remains reversible; inspect `prune candidates` at any time.
+- Every request: cheap state check; search itself incrementally reconciles changed files.
+- After 24 hours or 50 requests, whichever comes first: strict OKF reconciliation, FTS5 verification,
+  and utility recalculation.
+- After 30 days: return cold candidates to the agent. The agent reads them and records its selection
+  with `maintenance review`; the engine never archives the entire list blindly by default.
+- After 24 hours, when private backup is explicitly enabled: run the validated private Git backup.
 
-## Manual recovery for operators
+The interaction threshold handles periods of intense editing. The time threshold catches up after a
+quiet period. If no agent request occurs, nothing runs; the next request performs the overdue work.
+That is safe because an inactive agent is not creating new knowledge. A browser-only chat cannot
+operate this local loop.
 
-The commands below are implementation details for repairing a schedule. Replace
-`enhanced-second-brain` with the absolute path to the installed standalone application.
+The maintenance state and usage ledger travel in the portable bundle. Derived scores and FTS5 do not;
+they are rebuilt after restoration.
+
+## Optional unattended scheduling
+
+Use `<application> --vault <vault> install --with-os-automation` only when maintenance must run even
+with no agent interaction. Daily verified backup is included only when a Git remote exists **and**
+`[backup] enabled = true` explicitly confirms that the destination is private. Repository visibility
+cannot be inferred from a URL.
+
+The commands below are implementation details for repairing or customizing that optional schedule.
+Replace `enhanced-second-brain` with the absolute path to the standalone application.
 
 ### Windows Task Scheduler
 
@@ -22,8 +38,6 @@ Import and customize [`automation/windows/enhanced-second-brain.xml`](../automat
 ```powershell
 enhanced-second-brain --vault C:\Knowledge\second-brain reconcile
 ```
-
-The generated task enables “Start when available” and allows runs on battery, so a missed laptop run is recovered after the user session returns. If the task must run while fully logged out, configure credentials through Task Scheduler rather than putting passwords in scripts.
 
 ### macOS launchd
 
@@ -42,4 +56,6 @@ systemctl --user daemon-reload
 systemctl --user enable --now enhanced-second-brain.timer
 ```
 
-Every scheduler should treat non-zero exits as failures. Archive and backup commands intentionally fail closed when validation or safety checks fail.
+Every scheduler should treat non-zero exits as failures. Unattended archival uses deterministic hard
+guards but cannot perform the agent's semantic review, so agent-driven mode remains the recommended
+default. Archive and backup commands intentionally fail closed when validation or safety checks fail.
