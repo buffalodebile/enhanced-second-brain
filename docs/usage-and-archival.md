@@ -26,7 +26,7 @@ A page qualifies only when all conditions hold:
 - no hard protection.
 
 Hard protections cover core, verified, confidential, rejected, project-hub, and sufficiently linked
-pages. Every 30 days, `maintenance run` gives the eligible list to the agent. The agent opens each
+pages. Every 30 days, the next `context` call gives the eligible list to the agent. The agent opens each
 candidate and checks whether it is obsolete, duplicated, superseded, or still a rare durable
 decision. `maintenance review` moves only the selected pages to `_archives/pruned/<date>/` and marks
 the review complete even when the correct selection is empty. Restore remains available through the

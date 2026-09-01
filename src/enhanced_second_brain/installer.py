@@ -18,16 +18,17 @@ from .utility import persist_scores
 def _instruction_block(vault: Path, executable: str) -> str:
     command = _agent_command(vault, executable)
     return f"""<!-- enhanced-second-brain:start -->
-## Enhanced Second Brain — automatic context
+## Enhanced Second Brain — provider-neutral automatic context
 
-- Before answering any request that may concern prior work, decisions, preferences, projects, or internal names, run `{command} index query "<the user's question>"`.
-- At the start of every user request, run `{command} maintenance run`. It performs only due deterministic work; ordinary turns are a cheap state check.
+- At the start of every user request, run `{command} context "<the user's exact request>"`. This one command advances the lightweight maintenance cadence, incrementally updates FTS5, returns relevant pages, and records them as injected.
+- Use the returned context only when relevant. If the command reports maintenance work or an archive review, complete the included instruction before the final answer.
 - Read only relevant results with `{command} page read <path>`.
 - After using a page in an answer, run `{command} usage record cited <path>`.
 - After creating durable knowledge, use `{command} page upsert` and run `{command} reconcile`.
-- If `maintenance run` reports an archive review, read every candidate and its relationships. Preserve rare durable decisions even when they are old. Then run `{command} maintenance review [only-the-pages-that-are-truly-safe-to-archive]`; an empty selection records that nothing should move.
+- If `context` reports an archive review, read every candidate and its relationships. Preserve rare durable decisions even when they are old. Then run `{command} maintenance review [only-the-pages-that-are-truly-safe-to-archive]`; an empty selection records that nothing should move.
 - When the user asks for a portable copy, run `{command} reconcile`, then `{command} bundle export <private-destination.zip>` and report its SHA-256.
 - The OKF Markdown files are authoritative. FTS5 is a local, disposable search index.
+- This protocol is independent of the model provider. It requires a local agent with filesystem and command access; a browser-only chat cannot access local files by itself.
 <!-- enhanced-second-brain:end -->
 """
 

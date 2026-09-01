@@ -7,8 +7,9 @@ location of an existing notes folder, if they have one.
 ## Goal
 
 Install one standalone Enhanced Second Brain application, initialize or adopt the vault, enable
-agent-driven automatic maintenance, connect the current agent, and verify the result. Do not ask the human to
-install Python, a package manager, a plugin, or a database server.
+agent-driven automatic maintenance, connect the current agent through its normal persistent
+instructions, and verify the result. Do not ask the human to install Python, a package manager, a
+plugin, or a database server. Do not add a dependency on one model provider.
 
 ## Procedure
 
@@ -40,11 +41,13 @@ install Python, a package manager, a plugin, or a database server.
 7. Read the managed block written to `<vault>/AGENTS.md`. Connect that block to the current agent's
    native persistent-instruction mechanism so context lookup also works outside the vault. Preserve
    all existing user instructions and do not create a provider-specific dependency inside the vault.
-8. Run `<application> --vault <vault> maintenance run`. Verify that `doctor` reports `fts5: true`,
-   a valid strict OKF audit, an existing index, and maintenance state. Do not create operating-system
-   tasks unless the human explicitly requests unattended scheduling.
-9. Report the vault path, application path, verification result, and any limitation. Do not claim
-   that browser-only chat interfaces can access local files.
+8. Run `<application> --vault <vault> context "installation verification"`. Verify that its JSON
+   contains `context` and `maintenance`, then verify that `doctor` reports `fts5: true`, a valid
+   strict OKF audit, an existing index, and maintenance state. Do not create operating-system tasks
+   unless the human explicitly requests unattended scheduling.
+9. Report the vault path, application path, verification result, and any limitation. The protocol
+   works with any local command-capable agent regardless of model provider. Do not claim that a
+   browser-only chat interface can access local files without a local integration.
 
 ## Portable export and migration
 

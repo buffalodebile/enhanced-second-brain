@@ -39,6 +39,7 @@ jobs:
       - run: /tmp/esb-smoke/bin/python -m enhanced_second_brain --version
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install
       - run: test -f /tmp/new-brain/AGENTS.md
+      - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain context "installation verification"
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain doctor
 
   standalone:
@@ -74,7 +75,7 @@ jobs:
           cp "$PWD/${{ matrix.asset }}" "$RUNNER_TEMP/esb-agent/enhanced-second-brain"
           chmod +x "$RUNNER_TEMP/esb-agent/enhanced-second-brain"
           "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" install
-          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" maintenance run
+          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" context "installation verification"
           "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" doctor
           test -f "$RUNNER_TEMP/SecondBrain/AGENTS.md"
           test -z "$(find "$RUNNER_TEMP/esb-agent" -type f -name 'python*' -print -quit)"
@@ -89,7 +90,7 @@ jobs:
           Copy-Item -LiteralPath '${{ matrix.asset }}' -Destination $engine
           & $engine --vault $vault install
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $engine --vault $vault maintenance run
+          & $engine --vault $vault context 'installation verification'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & $engine --vault $vault doctor
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

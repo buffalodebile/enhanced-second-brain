@@ -12,6 +12,7 @@ from .backup import backup
 from .benchmark import run as run_benchmark
 from .bundle import export_bundle, restore_bundle
 from .config import DEFAULT_TOML, Settings, ensure_vault, resolve_settings
+from .context import prepare as prepare_context
 from .errors import ESBError
 from .index import query, rebuild, results_as_dict, status, update
 from .installer import install as install_toolkit
@@ -106,6 +107,11 @@ def _parser() -> argparse.ArgumentParser:
         "--dry-run-automation", action="store_true", help=argparse.SUPPRESS
     )
     commands.add_parser("doctor")
+    context = commands.add_parser(
+        "context", help="Prepare one agent turn: maintenance, index, search, usage"
+    )
+    context.add_argument("query")
+    context.add_argument("--limit", type=int)
 
     okf = commands.add_parser("okf").add_subparsers(dest="okf_command", required=True)
     migrate = okf.add_parser("migrate")
@@ -198,6 +204,8 @@ def dispatch(args: argparse.Namespace) -> Any:
     settings = _settings(args)
     if args.command == "doctor":
         return _doctor(settings)
+    if args.command == "context":
+        return prepare_context(settings, args.query, limit=args.limit)
     if args.command == "okf":
         if args.okf_command == "migrate":
             return migrate_vault(settings.vault, write=args.write)

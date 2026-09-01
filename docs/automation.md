@@ -1,12 +1,14 @@
 # Agent-driven automation
 
 The default installation creates no Task Scheduler, launchd, cron, or systemd entry. Instead, the
-managed agent instructions run `maintenance run` at the start of each request. That command advances
-one interaction counter and reads `_meta/maintenance.json` under a file lock.
+managed agent instructions run one provider-neutral `context "<request>"` command at the start of
+each request. It advances the interaction counter under a file lock, updates changed Markdown in
+FTS5, searches for relevant context, and records returned pages as weak usage. There is no separate
+maintenance command for an agent to remember during ordinary work.
 
 The default cadence is:
 
-- Every request: cheap state check; search itself incrementally reconciles changed files.
+- Every request: one `context` call; cheap state check plus incremental indexing and local search.
 - After 24 hours or 50 requests, whichever comes first: strict OKF reconciliation, FTS5 verification,
   and utility recalculation.
 - After 30 days: return cold candidates to the agent. The agent reads them and records its selection
@@ -15,8 +17,9 @@ The default cadence is:
 
 The interaction threshold handles periods of intense editing. The time threshold catches up after a
 quiet period. If no agent request occurs, nothing runs; the next request performs the overdue work.
-That is safe because an inactive agent is not creating new knowledge. A browser-only chat cannot
-operate this local loop.
+That is safe because an inactive agent is not creating new knowledge. This protocol is independent
+of the model provider, but the host application must be able to run local commands and retain the
+managed instruction. A browser-only chat cannot operate this local loop by itself.
 
 The maintenance state and usage ledger travel in the portable bundle. Derived scores and FTS5 do not;
 they are rebuilt after restoration.

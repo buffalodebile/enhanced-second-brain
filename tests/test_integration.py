@@ -66,7 +66,8 @@ def test_one_command_install_adopts_legacy_markdown(tmp_path: Path) -> None:
     assert result["agent_instructions"]["files"] == ["AGENTS.md"]
     assert result["automation"] == {"installed": False, "reason": "disabled"}
     instructions = (vault / "AGENTS.md").read_text(encoding="utf-8")
-    assert "maintenance run" in instructions
+    assert 'context "<the user\'s exact request>"' in instructions
+    assert "provider-neutral" in instructions
     assert "maintenance review" in instructions
     assert result["index"]["added"] == 1
     assert audit_vault(vault, strict=True)["valid"]
@@ -132,6 +133,28 @@ def test_standard_install_connects_without_plugins(tmp_path: Path) -> None:
     result = write_agent_instructions(vault)
     assert result["changed"]
     assert (vault / "AGENTS.md").exists()
+
+
+def test_context_is_one_provider_neutral_turn(tmp_path: Path, capsys) -> None:
+    vault = tmp_path / "brain"
+    assert main(["--vault", str(vault), "init"]) == 0
+    capsys.readouterr()
+    settings = resolve_settings(vault)
+    upsert_page(
+        settings,
+        "concepts/portable.md",
+        title="Portable memory",
+        description="Provider-neutral local context.",
+        body="# Portable memory\n\nWorks with any command-capable local agent.",
+    )
+
+    assert main(["--vault", str(vault), "context", "provider neutral memory"]) == 0
+    payload = __import__("json").loads(capsys.readouterr().out)
+    assert payload["context"][0]["path"] == "concepts/portable.md"
+    assert payload["maintenance"]["turn"] == 1
+    usage = aggregate(settings)["concepts/portable.md"]
+    assert usage["events"] == 1
+    assert usage["effective_usage"] == 0.25
 
 
 def test_os_automation_is_explicit_opt_in(tmp_path: Path) -> None:

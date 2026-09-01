@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from .config import Settings
+from .context import prepare as prepare_context
 from .index import query, results_as_dict, status, update
 from .okf import audit_page, migrated_metadata
 from .pages import dump_markdown, is_knowledge_path, parse_markdown, safe_relative
@@ -73,3 +74,9 @@ def cite(settings: Settings, path: str) -> dict[str, Any]:
 
 def system_status(settings: Settings) -> dict[str, Any]:
     return {"vault": str(settings.vault), "index": status(settings)}
+
+
+def agent_context(
+    settings: Settings, text: str, *, limit: int | None = None
+) -> dict[str, Any]:
+    return prepare_context(settings, text, limit=limit)

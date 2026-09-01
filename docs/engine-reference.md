@@ -8,6 +8,7 @@ and development:
 
 ```text
 enhanced-second-brain init | install | doctor
+enhanced-second-brain context "<user request>"
 enhanced-second-brain okf migrate|audit
 enhanced-second-brain index update|query|status|rebuild
 enhanced-second-brain page read|upsert

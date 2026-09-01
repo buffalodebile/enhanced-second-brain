@@ -8,8 +8,9 @@ Every new conversation starts from zero. You repeat your preferences, projects, 
 useful context slowly disappears into old chats and scattered notes.
 
 Enhanced Second Brain turns a folder of portable knowledge files into a private memory that any
-local AI agent can search, maintain, and keep tidy. It is model-agnostic: the model can change while
-your context stays yours.
+local AI agent can search, maintain, and keep tidy. It is provider-neutral: the same files and the
+same single `context` command work with local agents powered by OpenAI, Anthropic, Google, open
+models, or future models. The model can change while your context stays yours.
 
 ## Installation: give the job to your agent
 
@@ -125,10 +126,11 @@ files. No GPU, embeddings, network request, or continuously running process is i
 
 ### During normal work
 
-At the start of each request, the agent performs a tiny maintenance check. It searches before
-answering context-dependent questions, records which pages were actually read or used, and distills
-durable new knowledge back into the relevant page. Raw conversation text is not blindly copied into
-the knowledge base.
+At the start of each request, the agent runs one local command: `context`. That command performs a
+tiny maintenance check, updates changed files in FTS5, searches the request, returns likely pages,
+and records which results were shown. The agent then reads only relevant pages, records those it
+actually uses, and distills durable new knowledge back into the right page. Raw conversation text is
+not blindly copied into the knowledge base.
 
 An injected search result counts `0.25`, an opened page counts `1`, and a page actually used in an
 answer counts `2`. Older activity gradually loses weight, so something that was popular years ago
@@ -137,7 +139,7 @@ last use are combined into the page's utility score.
 
 ### Automatic catch-up
 
-The first agent request after 24 hours—or after 50 interactions—runs a short local reconciliation:
+The first `context` call after 24 hours—or after 50 interactions—runs a short local reconciliation:
 
 1. brings new or edited Markdown into the OKF profile;
 2. validates required metadata and source structure;
@@ -157,6 +159,10 @@ can be restored; automatic deletion is never used.
 
 Operating-system scheduling remains an explicit reliability option for unattended machines. It is
 not part of the default installation.
+
+There is no universal API that can force every possible LLM website to access local files. “Any
+local AI” therefore means any agent application that can read files, run a command, and retain a
+persistent instruction. The engine itself contains no model- or provider-specific adapter.
 
 ## Why this stack
 

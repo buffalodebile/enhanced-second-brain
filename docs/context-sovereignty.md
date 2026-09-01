@@ -37,7 +37,7 @@ The toolkit improves access to the context; it never becomes the owner of that c
 | `_meta/utility.json` | Utility scores are recalculated from pages and usage history. |
 | `.git/` and `.gitignore` | Git history belongs to private backup, not the portable knowledge contract. |
 | `.obsidian/` | Editor layout and plugins are optional machine preferences. |
-| `AGENTS.md` and `CLAUDE.md` | Agent commands contain local executable and vault paths, so fresh instructions are generated. |
+| Local agent instruction files | Agent commands contain local executable and vault paths, so fresh instructions are generated. |
 | Temporary locks and install safety copies | They are local operating state, not knowledge. |
 | Symbolic links and secret-like files | Export fails closed instead of following a link outside the vault or accidentally packaging credentials. |
 
