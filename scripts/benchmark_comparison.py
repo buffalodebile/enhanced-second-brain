@@ -1,4 +1,4 @@
-"""Reproducible synthetic comparison: FTS5 versus reading every Markdown file."""
+"""Reproducible controlled comparison: FTS5 versus reading every Markdown file."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def percentile(values: list[float], percentile_value: int) -> float:
     return quantiles[percentile_value - 1]
 
 
-def write_synthetic_vault(vault: Path, pages: int) -> None:
+def write_test_vault(vault: Path, pages: int) -> None:
     concepts = vault / "concepts"
     concepts.mkdir(parents=True)
     for number in range(pages):
@@ -34,20 +34,20 @@ def write_synthetic_vault(vault: Path, pages: int) -> None:
         topic = f"habitat{number % 37:02d}"
         content = f"""---
 type: Concept
-title: Synthetic field record {number:05d}
-description: Fictional observation for {codename} in {topic}.
-tags: [synthetic, fieldwork, {topic}]
+title: Benchmark field record {number:05d}
+description: Controlled benchmark observation for {codename} in {topic}.
+tags: [benchmark, fieldwork, {topic}]
 sources:
-  - resource: synthetic://record/{number:05d}
+  - resource: benchmark://record/{number:05d}
 generated:
   by: process:benchmark
   at: 2026-09-01T00:00:00Z
 status: stable
 ---
 
-# Synthetic field record {number:05d}
+# Benchmark field record {number:05d}
 
-The fictional Aurora team stored calibration notes for {codename}. This record concerns
+The Aurora benchmark team stored calibration notes for {codename}. This record concerns
 offline estuary fieldwork in {topic}, seasonal monitoring, and a portable sensor dossier.
 """
         (concepts / f"record-{number:05d}.md").write_text(
@@ -120,7 +120,7 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory(prefix="esb-comparison-") as raw:
         vault = Path(raw)
-        write_synthetic_vault(vault, args.pages)
+        write_test_vault(vault, args.pages)
         settings = Settings(vault=vault, config_file=None, max_results=args.top_k)
         benchmark_cases = cases(args.pages, args.queries)
         rebuild_started = time.perf_counter()
@@ -156,7 +156,7 @@ def main() -> int:
             "os": platform.platform(),
             "machine": platform.machine(),
             "python": platform.python_version(),
-            "synthetic_pages": args.pages,
+            "test_pages": args.pages,
             "distinct_cases": len(benchmark_cases),
             "runs": args.runs,
             "index_rebuild_ms": round(rebuild_ms, 3),
