@@ -32,8 +32,32 @@ for the human to configure.
 - **Cleaner memory** — new and edited files are indexed automatically; cold notes are archived,
   never deleted.
 - **Privacy** — notes, usage signals, and search stay on the machine.
-- **Freedom and sovereignty** — the context is a normal folder that can be copied, versioned,
-  zipped, opened in another editor, or handed to another model.
+- **Freedom and context sovereignty** — the memory belongs to you, not to a model account. Export
+  it as one standard ZIP, move it to another machine, open it in another editor, or connect it to
+  another local AI.
+
+## Your context, in one portable file
+
+Ask your local agent:
+
+> Export my Enhanced Second Brain as one portable bundle, verify it, and tell me where you saved it.
+
+The resulting `.zip` contains the current OKF Markdown knowledge, reversibly archived notes,
+attachments, local settings, and usage history. Every file has a SHA-256 checksum in a small
+manifest. It does **not** contain the disposable FTS5 index, Git internals, editor state, or
+machine-specific agent instructions. Those are rebuilt for the destination machine.
+
+To move it, copy that ZIP to a private drive, encrypted storage, or another computer. Then give the
+repository URL and the ZIP to any supported local agent and say:
+
+> Restore this Enhanced Second Brain bundle into my notes folder, reconnect automatic maintenance,
+> and run the health check.
+
+The agent verifies every file, rejects unsafe paths or modified content, restores into a new folder,
+audits OKF, rebuilds search, and regenerates local integration. Without the toolkit, the ZIP is
+still readable with any ordinary archive tool because the knowledge remains UTF-8 Markdown. See
+[Context sovereignty and portable export](docs/context-sovereignty.md) for the exact contents,
+commands, migration flow, security limits, and difference between export and backup.
 
 ## Measured result
 
@@ -139,5 +163,6 @@ and when a replicated alternative would make sense.
 - Lexical search can miss paraphrases that share no useful vocabulary; benchmark your own corpus.
 - Obsidian is optional and remains only an interface for the same portable files.
 - Remote backup is opt-in and must point to a private destination.
+- A portable ZIP is not encrypted automatically; protect it like any private copy of your memory.
 
 Apache-2.0 licensed.

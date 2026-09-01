@@ -17,6 +17,7 @@ enhanced-second-brain prune candidates|apply|restore
 enhanced-second-brain reconcile
 enhanced-second-brain benchmark
 enhanced-second-brain backup
+enhanced-second-brain bundle export|restore
 ```
 
 Every operation accepts a vault through `--vault`, `ESB_VAULT_PATH`, or the nearest

@@ -1,5 +1,10 @@
 # Backup and restore
 
+This page covers continuous private Git backup, including version history and dirty snapshots. For
+a single standard ZIP that can move the knowledge context between machines, editors, or local AI
+agents, use the [portable export guide](context-sovereignty.md). The two mechanisms complement each
+other: Git is the recovery history; the portable bundle is the clean transfer format.
+
 Use a **private** Git repository for a real vault.
 
 Automatic scheduling is deliberately off until the vault's `second-brain.toml` contains:

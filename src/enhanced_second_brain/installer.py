@@ -23,6 +23,7 @@ def _instruction_block(vault: Path, executable: str) -> str:
 - Read only relevant results with `{command} page read <path>`.
 - After using a page in an answer, run `{command} usage record cited <path>`.
 - After creating durable knowledge, use `{command} page upsert` and run `{command} reconcile`.
+- When the user asks for a portable copy, run `{command} reconcile`, then `{command} bundle export <private-destination.zip>` and report its SHA-256.
 - The OKF Markdown files are authoritative. FTS5 is a local, disposable search index.
 <!-- enhanced-second-brain:end -->
 """

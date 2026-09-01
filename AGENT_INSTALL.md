@@ -45,5 +45,30 @@ install Python, a package manager, a plugin, or a database server.
 9. Report the vault path, application path, verification result, and any limitation. Do not claim
    that browser-only chat interfaces can access local files.
 
+## Portable export and migration
+
+When the human asks for an export, first run `reconcile`, then run:
+
+```text
+<application> --vault <vault> bundle export <private-destination.zip>
+```
+
+Choose a destination outside the vault. Report the final path, SHA-256, file count, and verification
+status. Explain that the ZIP contains private knowledge and is not encrypted automatically.
+
+To restore on another machine, download and verify the matching standalone application as above,
+choose a new path that does not already exist, and run:
+
+```text
+<application> --vault <new-vault> bundle restore <portable-bundle.zip>
+<application> --vault <new-vault> install
+<application> --vault <new-vault> doctor
+```
+
+The first command verifies file checksums, safely restores the portable context, audits OKF, and
+rebuilds FTS5. `install` then regenerates machine-specific instructions and automation. Connect the
+new managed instruction block to the current agent as in step 7. Never copy an old machine's agent
+instructions or search cache as a substitute for this regeneration.
+
 Re-running the same procedure upgrades the application and reconciles the vault idempotently. A
 dated safety copy is created before any existing Markdown file is migrated.

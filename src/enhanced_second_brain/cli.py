@@ -10,6 +10,7 @@ from typing import Any
 from . import __version__
 from .backup import backup
 from .benchmark import run as run_benchmark
+from .bundle import export_bundle, restore_bundle
 from .config import DEFAULT_TOML, Settings, ensure_vault, resolve_settings
 from .errors import ESBError
 from .index import query, rebuild, results_as_dict, status, update
@@ -154,6 +155,13 @@ def _parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--top-k", type=int, default=5)
     benchmark.add_argument("--max-p95-ms", type=float)
     commands.add_parser("backup")
+    bundle = commands.add_parser("bundle").add_subparsers(
+        dest="bundle_command", required=True
+    )
+    bundle_export = bundle.add_parser("export")
+    bundle_export.add_argument("destination", type=Path)
+    bundle_restore = bundle.add_parser("restore")
+    bundle_restore.add_argument("archive", type=Path)
     return parser
 
 
@@ -168,6 +176,10 @@ def dispatch(args: argparse.Namespace) -> Any:
             automation=not args.no_automation,
             dry_run_automation=args.dry_run_automation,
         )
+    if args.command == "bundle" and args.bundle_command == "restore":
+        if not args.vault:
+            raise ESBError("bundle restore requires --vault NEW_PATH")
+        return restore_bundle(args.archive, args.vault)
     settings = _settings(args)
     if args.command == "doctor":
         return _doctor(settings)
@@ -234,6 +246,8 @@ def dispatch(args: argparse.Namespace) -> Any:
         )
     if args.command == "backup":
         return backup(settings)
+    if args.command == "bundle":
+        return export_bundle(settings, args.destination)
     raise ESBError(f"Unsupported command: {args.command}")
 
 

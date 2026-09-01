@@ -43,6 +43,11 @@ SQLite therefore remains the smaller and more mature default. libSQL would becom
 the product later needed a remotely hosted database or low-latency embedded replicas across several
 machines. Even then, the portable OKF files—not the search cache—would remain the source of truth.
 
+The toolkit can package that source of truth into a verified standard ZIP. See
+[Context sovereignty and portable export](context-sovereignty.md). The bundle transports knowledge,
+archives, attachments, settings, and usage history while leaving the reconstructible FTS5 cache and
+machine-specific integration behind.
+
 ## Safety and portability
 
 Archival moves eligible pages to a dated folder and never deletes them automatically. Remote backup
