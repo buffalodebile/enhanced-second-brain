@@ -23,7 +23,7 @@ def _instruction_block(vault: Path, executable: str) -> str:
 - Read only relevant results with `{command} page read <path>`.
 - After using a page in an answer, run `{command} usage record cited <path>`.
 - After creating durable knowledge, use `{command} page upsert` and run `{command} reconcile`.
-- Markdown/Enhanced OKF is authoritative. FTS5 is a local reconstructible cache. Do not add QMD, embeddings, a GPU service, a vector daemon, a graph service, or MCP.
+- The OKF Markdown files are authoritative. FTS5 is a local, disposable search index.
 <!-- enhanced-second-brain:end -->
 """
 
@@ -39,20 +39,6 @@ def _agent_command(
 
         return f"& {quote(executable)} --vault {quote(vault)}"
     return f"{shlex.quote(executable)} --vault {shlex.quote(str(vault))}"
-
-
-def _global_instruction_block(vault: Path, executable: str) -> str:
-    command = _agent_command(vault, executable)
-    return f"""<!-- enhanced-second-brain-global:start -->
-## Enhanced Second Brain — automatic global context
-
-- Before answering any request that may concern prior work, decisions, preferences, projects, or internal names, run `{command} index query "<the user's question>"`.
-- Read only relevant results with `{command} page read <path>`.
-- After using a page in an answer, run `{command} usage record cited <path>`.
-- After creating durable knowledge, use `{command} page upsert` and run `{command} reconcile`.
-- Markdown/Enhanced OKF is authoritative. FTS5 is a local reconstructible cache. Do not require a skill, QMD, embeddings, a GPU process, a vector daemon, a graph service, or MCP.
-<!-- enhanced-second-brain-global:end -->
-"""
 
 
 def _append_managed(
@@ -76,34 +62,18 @@ def _append_managed(
     return True
 
 
-def connect_ai(vault: Path, *, codex_home: Path | None = None) -> dict[str, Any]:
+def write_agent_instructions(vault: Path) -> dict[str, Any]:
     changed = []
     executable = _executable()
     if _append_managed(vault / "AGENTS.md", _instruction_block(vault, executable)):
         changed.append("AGENTS.md")
-    if codex_home is None:
-        configured_home = os.environ.get("CODEX_HOME")
-        codex_home = (
-            Path(configured_home).expanduser()
-            if configured_home
-            else Path.home() / ".codex"
-        )
-    override = codex_home / "AGENTS.override.md"
-    global_target = (
-        override
-        if override.exists() and override.read_text(encoding="utf-8").strip()
-        else codex_home / "AGENTS.md"
-    )
-    if _append_managed(
-        global_target,
-        _global_instruction_block(vault, executable),
-        start="<!-- enhanced-second-brain-global:start -->",
-        end="<!-- enhanced-second-brain-global:end -->",
-    ):
-        changed.append(str(global_target))
     return {
         "changed": changed,
-        "files": ["AGENTS.md", str(global_target)],
+        "files": ["AGENTS.md"],
+        "next_step": (
+            "The installing agent should connect this managed block to its own "
+            "persistent instruction mechanism."
+        ),
     }
 
 
@@ -143,7 +113,6 @@ def install(
     *,
     automation: bool = True,
     dry_run_automation: bool = False,
-    codex_home: Path | None = None,
 ) -> dict[str, Any]:
     vault = vault.expanduser().resolve()
     _initialize(vault)
@@ -167,7 +136,7 @@ def install(
             "backup": str(backup_root) if backup_root else None,
             "audit": audit,
         }
-    ai_connection = connect_ai(vault, codex_home=codex_home)
+    agent_instructions = write_agent_instructions(vault)
     result = {
         "passed": True,
         "vault": str(vault),
@@ -176,7 +145,7 @@ def install(
         "audit": audit,
         "index": rebuild(settings),
         "utility": persist_scores(settings),
-        "ai_connection": ai_connection,
+        "agent_instructions": agent_instructions,
         "automation": install_automation(settings, dry_run=dry_run_automation)
         if automation
         else {"installed": False, "reason": "disabled"},

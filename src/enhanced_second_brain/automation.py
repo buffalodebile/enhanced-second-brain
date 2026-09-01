@@ -42,7 +42,7 @@ def _executable() -> str:
         if candidate and Path(candidate).is_file():
             return str(Path(candidate).resolve())
     raise ESBError(
-        "The Enhanced Second Brain application was not found. Run the installer again."
+        "The Enhanced Second Brain application was not found. Ask the installing agent to repair it."
     )
 
 

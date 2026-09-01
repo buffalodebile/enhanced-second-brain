@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "enhanced-second-brain"
-version = "0.2.0"
-description = "Standalone local OKF and FTS5 second brain with automatic maintenance and reversible archival"
+version = "0.3.0"
+description = "Sovereign local OKF and FTS5 second brain with automatic maintenance and reversible archival"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}

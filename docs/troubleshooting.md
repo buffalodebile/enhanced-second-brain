@@ -2,29 +2,15 @@
 
 ## Use an existing notes folder
 
-The easy installer creates `SecondBrain` in your home folder by default. To adopt another folder,
-set `ESB_VAULT_PATH` before running it.
+Give the absolute folder path to the installing agent together with the repository URL. The agent
+must pass that exact path to the application rather than creating `~/SecondBrain`. A dated safety
+copy of every Markdown file requiring migration is created before it is changed.
 
-Windows PowerShell:
+## The agent cannot download the application
 
-```powershell
-$env:ESB_VAULT_PATH = "C:\path\to\your\notes"
-.\install.cmd
-```
-
-macOS or Linux:
-
-```bash
-curl -fsSL https://github.com/buffalodebile/enhanced-second-brain/releases/latest/download/install.sh | ESB_VAULT_PATH="$HOME/path/to/notes" sh
-```
-
-The installer creates a dated safety copy of Markdown files that need migration.
-
-## The easy installer cannot download the app
-
-Check the internet connection and rerun the installer. It downloads one standalone application
-from this repository's GitHub release. Corporate networks may need to allow GitHub release
-downloads. It does not install Python or modify the shell configuration.
+Check the internet connection and GitHub release access. Corporate networks may need to allow
+release downloads. The agent must download both the matching standalone application and
+`SHA256SUMS`, then verify integrity before execution.
 
 ## “No vault configured”
 
@@ -32,7 +18,8 @@ Pass `--vault`, set `ESB_VAULT_PATH`, or create `second-brain.toml`. The toolkit
 
 ## FTS5 is unavailable
 
-Rerun the installer and use the internal `doctor` operation from the [engine reference](engine-reference.md). FTS5 is bundled in the standalone application.
+Ask the agent to run the internal `doctor` operation from the [engine reference](engine-reference.md).
+FTS5 is bundled in the standalone application.
 
 ## Search misses a paraphrase
 

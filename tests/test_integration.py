@@ -9,8 +9,8 @@ from enhanced_second_brain.cli import main
 from enhanced_second_brain.config import resolve_settings
 from enhanced_second_brain.installer import (
     _agent_command,
-    connect_ai,
     install,
+    write_agent_instructions,
 )
 from enhanced_second_brain.okf import audit_vault
 from enhanced_second_brain.service import cite, read_page, search, upsert_page
@@ -56,12 +56,10 @@ def test_one_command_install_adopts_legacy_markdown(tmp_path: Path) -> None:
         "---\ntitle: Legacy\ntags: [portable]\n---\n\n# Legacy\n\nExisting notes survive migration.\n",
         encoding="utf-8",
     )
-    codex_home = tmp_path / "codex-home"
     result = install(
         vault,
         automation=True,
         dry_run_automation=True,
-        codex_home=codex_home,
     )
     assert result["passed"]
     assert result["preflight_backup"]
@@ -69,16 +67,13 @@ def test_one_command_install_adopts_legacy_markdown(tmp_path: Path) -> None:
     assert (vault / "AGENTS.md").exists()
     assert " --vault " in (vault / "AGENTS.md").read_text(encoding="utf-8")
     assert "`esb " not in (vault / "AGENTS.md").read_text(encoding="utf-8")
-    assert not (vault / "CLAUDE.md").exists()
-    assert not (vault / ".codex" / "config.toml").exists()
-    global_agents = codex_home / "AGENTS.md"
-    assert str(vault) in global_agents.read_text(encoding="utf-8")
+    assert result["agent_instructions"]["files"] == ["AGENTS.md"]
     assert result["automation"]["installed"] is False
     assert result["index"]["added"] == 1
     assert audit_vault(vault, strict=True)["valid"]
-    second = install(vault, automation=False, codex_home=codex_home)
+    second = install(vault, automation=False)
     assert second["migration"]["count"] == 0
-    assert second["ai_connection"]["changed"] == []
+    assert second["agent_instructions"]["changed"] == []
     assert main(["--vault", str(vault), "prune", "apply", "--all-candidates"]) == 0
 
 
@@ -120,7 +115,7 @@ def test_page_tools_reject_operational_and_outside_paths(tmp_path: Path) -> None
         )
 
 
-def test_global_agent_commands_are_shell_safe() -> None:
+def test_agent_commands_are_shell_safe() -> None:
     windows = _agent_command(
         Path(r"C:\Knowledge Base"), r"C:\Tools\Enhanced Brain\esb.exe", windows=True
     )
@@ -135,8 +130,6 @@ def test_global_agent_commands_are_shell_safe() -> None:
 
 def test_standard_install_connects_without_plugins(tmp_path: Path) -> None:
     vault = tmp_path / "brain"
-    codex_home = tmp_path / "codex-home"
-    result = connect_ai(vault, codex_home=codex_home)
+    result = write_agent_instructions(vault)
     assert result["changed"]
-    assert not (vault / ".codex" / "config.toml").exists()
     assert (vault / "AGENTS.md").exists()

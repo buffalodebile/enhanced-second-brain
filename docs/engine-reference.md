@@ -1,6 +1,7 @@
 # Internal engine reference
 
-Most people never need this page. The installer connects Codex and schedules maintenance.
+Most people never need this page. The installing agent connects its instruction mechanism and
+schedules maintenance.
 
 The standalone application exposes a small internal interface for AI tools, automation, recovery,
 and development:

@@ -2,75 +2,120 @@
 
 [![CI](https://github.com/buffalodebile/enhanced-second-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/buffalodebile/enhanced-second-brain/actions/workflows/ci.yml)
 
-## Give your AI a memory that survives the chat
+## Give any local AI a memory that survives the chat
 
-Every new AI conversation starts from zero. You repeat your preferences, your projects, and the
-decisions you already made.
+Every new conversation starts from zero. You repeat your preferences, projects, and decisions, while
+useful context slowly disappears into old chats and scattered notes.
 
-Enhanced Second Brain turns ordinary Markdown files into a private memory that Codex can search,
-update, and clean up automatically.
+Enhanced Second Brain turns a folder of portable knowledge files into a private memory that any
+local AI agent can search, maintain, and keep tidy. It is model-agnostic: the model can change while
+your context stays yours.
 
-## Install in a few minutes
+## Installation: give the job to your agent
 
-### Windows
+Send this message to any local AI agent that can access files and run commands:
 
-1. [Download the Windows installer](https://github.com/buffalodebile/enhanced-second-brain/releases/latest/download/install.cmd).
-2. Double-click `install.cmd`.
-3. Restart Codex once.
+> Install Enhanced Second Brain from https://github.com/buffalodebile/enhanced-second-brain.
+> Follow AGENT_INSTALL.md, use my existing notes folder if I provide one, and verify everything.
 
-### macOS or Linux
+That is the human installation flow. The agent detects the machine, downloads one verified
+standalone application, adopts or creates the knowledge folder, builds search, schedules maintenance,
+connects its own persistent instructions, and runs a health check.
 
-Paste this one command into Terminal, then restart your AI tool:
+There is no Windows installer to click and no runtime, package manager, plugin, or database service
+for the human to configure.
 
-```bash
-curl -fsSL https://github.com/buffalodebile/enhanced-second-brain/releases/latest/download/install.sh | sh
+## What you gain
+
+- **Less repetition** — previous decisions and project context can be recovered before answering.
+- **Faster retrieval** — search opens the few useful notes instead of scanning the whole folder.
+- **Cleaner memory** — new and edited files are indexed automatically; cold notes are archived,
+  never deleted.
+- **Privacy** — notes, usage signals, and search stay on the machine.
+- **Freedom and sovereignty** — the context is a normal folder that can be copied, versioned,
+  zipped, opened in another editor, or handed to another model.
+
+## Markdown and OKF are used together
+
+OKF does not replace Markdown. [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+defines a knowledge bundle as a directory of Markdown files with YAML metadata at the top.
+
+- **Markdown** is the readable file and its content: headings, paragraphs, lists, tables, and links.
+- **OKF** is the portable contract around that content: type, title, description, sources,
+  provenance, generation time, and lifecycle.
+
+In short: Markdown is how the knowledge is written; OKF is how humans and machines agree on what
+that knowledge means. The same `.md` file provides both.
+
+```markdown
+---
+type: Decision
+title: Keep search local
+description: Use a disposable local index over portable knowledge files.
+tags: [architecture, privacy]
+sources:
+  - resource: notes/architecture-review.md
+generated: {by: process:enhanced-second-brain, at: 2026-09-01T00:00:00Z}
+status: stable
+---
+
+# Keep search local
+
+The knowledge files remain authoritative. The search database can always be rebuilt.
 ```
 
-The installer creates `SecondBrain` in your home folder and adds one standalone local app. There is
-no separate Python runtime, package manager, skill, plugin, agent, MCP server, database server, or
-command-line tool to install.
+## What FTS5 does
 
-Already have a notes folder? See [use an existing folder](docs/troubleshooting.md#use-an-existing-notes-folder).
+FTS5 is SQLite's full-text search engine. It breaks titles, tags, summaries, headings, and body text
+into searchable terms, keeps an inverted index, and ranks matches with BM25 relevance.
 
-## What you get
+When a query arrives, Enhanced Second Brain checks which files are new, changed, renamed, or gone.
+Only that delta is reindexed; unchanged files are not reparsed. Search then returns a small ranked
+set for the agent to read. The index is disposable: delete it and it rebuilds from the OKF Markdown
+files. No GPU, embeddings, network request, or continuously running process is involved.
 
-- **Less repetition** — your AI can recover previous decisions and project context.
-- **Faster answers** — it searches the useful notes instead of scanning everything.
-- **A cleaner memory** — new and edited files are picked up automatically; cold notes are archived,
-  never deleted.
-- **Privacy** — your notes and search stay on your computer.
-- **Freedom** — everything remains readable Markdown that you can copy, back up, or open in
-  Obsidian.
+## How the memory stays current
 
-## The whole system
+### During normal work
 
-1. **Markdown + OKF** keeps every note structured, readable, and portable.
-2. **FTS5** finds the useful notes locally without embeddings or a GPU.
-3. **Daily maintenance** picks up new and edited notes and repairs their structure.
-4. **Monthly cleanup** moves cold, low-value notes to a reversible archive.
+The agent searches before answering context-dependent questions, records which pages were actually
+read or used, and distills durable new knowledge back into the relevant page. Raw conversation text
+is not blindly copied into the knowledge base.
 
-Codex is connected during installation, so you keep working normally. No extra agent is installed.
+### Daily maintenance
 
-## Why "Enhanced"?
+The operating system runs a short local reconciliation that:
+
+1. brings new or edited Markdown into the OKF profile;
+2. validates required metadata and source structure;
+3. synchronizes and verifies the FTS5 index;
+4. recalculates page utility from real usage.
+
+It does not invent facts or rewrite meaning without a source and an agent judgment.
+
+### Monthly cleanup
+
+Pages become archive candidates only after at least 240 days without use, low effective usage, a
+minimum age, and a cold utility score. Important, verified, confidential, hub, and sufficiently
+linked pages are protected. Eligible pages move to a dated archive and can be restored; automatic
+deletion is never used.
+
+## Why this stack
 
 [Karpathy's LLM Wiki idea](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
-is simple and powerful: let the AI maintain a persistent wiki instead of rediscovering the same
-documents for every question.
+is powerful because knowledge is compiled and maintained once instead of rediscovered for every
+question. Enhanced Second Brain adds a portable OKF contract, fast local retrieval, usage-aware
+maintenance, and reversible cleanup while preserving that simple model.
 
-Enhanced Second Brain makes that idea ready for daily use with only two moving parts: portable OKF
-notes and a disposable FTS5 search index. Usage-aware ranking and reversible cleanup run
-automatically around them.
+SQLite FTS5 is deliberately the default because it is mature, embedded, cross-platform, and
+zero-configuration. The [technical overview](docs/technical-overview.md) explains the database choice
+and when a replicated alternative would make sense.
 
-There is no cloud database, subscription, GPU, vector model, or always-running service.
+## Limits
 
-## Good to know
-
-- Obsidian is optional. It is only an interface for the same Markdown files.
-- Automatic global memory currently works with Codex. Other local AI tools may need a one-time
-  connection to the same folder.
-- Browser-only chats cannot silently read files stored on your computer.
-- Back up important notes before migrating an existing folder.
-
-Want the implementation details? Read the [technical overview](docs/technical-overview.md).
+- A local agent needs filesystem and command access. A browser-only chat cannot silently read local files.
+- Lexical search can miss paraphrases that share no useful vocabulary; benchmark your own corpus.
+- Obsidian is optional and remains only an interface for the same portable files.
+- Remote backup is opt-in and must point to a private destination.
 
 Apache-2.0 licensed.

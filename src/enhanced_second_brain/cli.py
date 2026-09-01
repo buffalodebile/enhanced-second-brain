@@ -98,7 +98,6 @@ def _parser() -> argparse.ArgumentParser:
     install.add_argument(
         "--dry-run-automation", action="store_true", help=argparse.SUPPRESS
     )
-    install.add_argument("--codex-home", type=Path, help=argparse.SUPPRESS)
     commands.add_parser("doctor")
 
     okf = commands.add_parser("okf").add_subparsers(dest="okf_command", required=True)
@@ -168,7 +167,6 @@ def dispatch(args: argparse.Namespace) -> Any:
             Path(args.vault),
             automation=not args.no_automation,
             dry_run_automation=args.dry_run_automation,
-            codex_home=args.codex_home,
         )
     settings = _settings(args)
     if args.command == "doctor":

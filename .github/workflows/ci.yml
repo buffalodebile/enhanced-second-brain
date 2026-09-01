@@ -37,8 +37,8 @@ jobs:
       - run: python -m venv /tmp/esb-smoke
       - run: /tmp/esb-smoke/bin/pip install .
       - run: /tmp/esb-smoke/bin/python -m enhanced_second_brain --version
-      - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install --dry-run-automation --codex-home /tmp/esb-codex-home
-      - run: test ! -e /tmp/new-brain/.codex/config.toml
+      - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install --dry-run-automation
+      - run: test -f /tmp/new-brain/AGENTS.md
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain doctor
 
   standalone:
@@ -66,31 +66,27 @@ jobs:
           python-version: "3.13"
       - run: python -m pip install . pyinstaller
       - run: python -m PyInstaller --onefile --name "${{ matrix.name }}" standalone.py
-      - name: Test the standalone macOS/Linux application
+      - name: Test the agent-driven macOS/Linux installation
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          ESB_ENGINE_OVERRIDE="$PWD/${{ matrix.asset }}" \
-          ESB_INSTALL_HOME="$RUNNER_TEMP/esb-easy" \
-          ESB_VAULT_PATH="$RUNNER_TEMP/SecondBrain" \
-          CODEX_HOME="$RUNNER_TEMP/codex-home" \
-          ESB_INSTALL_DRY_RUN=1 \
-          sh install.sh
-          "$RUNNER_TEMP/esb-easy/enhanced-second-brain" --version
-          test -z "$(find "$RUNNER_TEMP/esb-easy" -type f -name 'python*' -print -quit)"
-      - name: Test the standalone Windows application
+          mkdir -p "$RUNNER_TEMP/esb-agent"
+          cp "$PWD/${{ matrix.asset }}" "$RUNNER_TEMP/esb-agent/enhanced-second-brain"
+          chmod +x "$RUNNER_TEMP/esb-agent/enhanced-second-brain"
+          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" install --dry-run-automation
+          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" doctor
+          test -f "$RUNNER_TEMP/SecondBrain/AGENTS.md"
+          test -z "$(find "$RUNNER_TEMP/esb-agent" -type f -name 'python*' -print -quit)"
+      - name: Test the agent-driven Windows installation
         if: runner.os == 'Windows'
         shell: cmd
         run: |
-          set "ESB_ENGINE_OVERRIDE=%CD%\${{ matrix.asset }}"
-          set "ESB_INSTALL_HOME=%RUNNER_TEMP%\esb-easy"
-          set "ESB_VAULT_PATH=%RUNNER_TEMP%\SecondBrain"
-          set "CODEX_HOME=%RUNNER_TEMP%\codex-home"
-          set "ESB_INSTALL_DRY_RUN=1"
-          set "ESB_INSTALL_NONINTERACTIVE=1"
-          call install.cmd
-          "%RUNNER_TEMP%\esb-easy\enhanced-second-brain.exe" --version
-          for /r "%RUNNER_TEMP%\esb-easy" %%F in (python*.exe) do exit /b 1
+          mkdir "%RUNNER_TEMP%\esb-agent"
+          copy /Y "%CD%\${{ matrix.asset }}" "%RUNNER_TEMP%\esb-agent\enhanced-second-brain.exe"
+          "%RUNNER_TEMP%\esb-agent\enhanced-second-brain.exe" --vault "%RUNNER_TEMP%\SecondBrain" install --dry-run-automation
+          "%RUNNER_TEMP%\esb-agent\enhanced-second-brain.exe" --vault "%RUNNER_TEMP%\SecondBrain" doctor
+          if not exist "%RUNNER_TEMP%\SecondBrain\AGENTS.md" exit /b 1
+          for /r "%RUNNER_TEMP%\esb-agent" %%F in (python*.exe) do exit /b 1
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
@@ -122,4 +118,6 @@ jobs:
       - name: Publish standalone release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" release-assets/* install.cmd install.sh --generate-notes --title "Enhanced Second Brain $GITHUB_REF_NAME"
+        run: |
+          (cd release-assets && sha256sum * > ../SHA256SUMS)
+          gh release create "$GITHUB_REF_NAME" release-assets/* SHA256SUMS --generate-notes --title "Enhanced Second Brain $GITHUB_REF_NAME"

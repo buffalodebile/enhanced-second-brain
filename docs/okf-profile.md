@@ -1,6 +1,11 @@
 # Enhanced OKF profile
 
-Enhanced Second Brain uses [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) as a portable Markdown convention and adds an explicitly separate governance profile.
+Enhanced Second Brain uses [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) and adds an explicitly separate governance profile.
+
+Markdown and OKF are complementary, not competing formats. The official OKF specification defines
+a bundle as a directory of UTF-8 Markdown documents. Each document contains YAML frontmatter for
+machine-readable meaning and a standard Markdown body for human-readable knowledge. Markdown is the
+physical document format; OKF is the interoperability contract carried by that document.
 
 ## Knowledge fields
 
@@ -20,7 +25,8 @@ Every page must contain:
 
 The toolkit also requires `summary`, `category`, `relationships`, `base_confidence`, `lifecycle`, `tier`, `created`, and `updated`. These are **Enhanced Second Brain extensions**, not claims about fields required by the official OKF specification.
 
-`description` and `summary` must match. Body links should use standard relative Markdown links with `.md`. `relationships` may hold typed targets for graph-aware agents.
+`description` and `summary` must match. Body links should use standard relative Markdown links with
+`.md`. `relationships` may hold typed targets for consumers that understand the Enhanced profile.
 
 ```markdown
 ---

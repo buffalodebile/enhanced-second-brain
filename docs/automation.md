@@ -1,14 +1,13 @@
 # Cross-platform automation
 
-The easy installer creates the native user-level schedule automatically. End users do not need to
-configure or run it. Daily verified backup is included only when a Git remote exists **and**
-`[backup] enabled = true` explicitly confirms that the destination is private. The installer cannot
-infer repository visibility from a URL.
+The installing agent asks the standalone application to create the native user-level schedule.
+End users do not need to configure or run it. Daily verified backup is included only when a Git
+remote exists **and** `[backup] enabled = true` explicitly confirms that the destination is private.
+Repository visibility cannot be inferred from a URL.
 
 The installed schedule uses this cadence:
 
 - Daily: `reconcile`; optionally `backup` to a private Git remote.
-- Weekly: `index update --verify-hashes` and `score`.
 - Monthly: `prune apply --all-candidates`. The first run waits for its calendar time rather than running during installation. Eligibility is conservative and archival remains reversible; inspect `prune candidates` at any time.
 
 ## Manual recovery for operators
@@ -24,7 +23,7 @@ Import and customize [`automation/windows/enhanced-second-brain.xml`](../automat
 enhanced-second-brain --vault C:\Knowledge\second-brain reconcile
 ```
 
-The automatic installer enables “Start when available” and allows runs on battery, so a missed laptop run is recovered after the user session returns. If the task must run while fully logged out, configure credentials through Task Scheduler rather than putting passwords in scripts.
+The generated task enables “Start when available” and allows runs on battery, so a missed laptop run is recovered after the user session returns. If the task must run while fully logged out, configure credentials through Task Scheduler rather than putting passwords in scripts.
 
 ### macOS launchd
 
