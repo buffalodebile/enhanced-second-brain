@@ -149,7 +149,7 @@ def main() -> int:
             args.runs,
             args.top_k,
         )
-        speedup = float(markdown["p50_ms"]) / float(fts5["p50_ms"])
+        time_saved_ms = float(markdown["p50_ms"]) - float(fts5["p50_ms"])
         time_saved = 1 - float(fts5["p50_ms"]) / float(markdown["p50_ms"])
         report = {
             "date": datetime.now(UTC).date().isoformat(),
@@ -161,8 +161,8 @@ def main() -> int:
             "runs": args.runs,
             "index_rebuild_ms": round(rebuild_ms, 3),
             "methods": [fts5, markdown],
-            "p50_speedup": round(speedup, 3),
-            "p50_time_saved_percent": round(time_saved * 100, 1),
+            "median_ms_saved": round(time_saved_ms, 3),
+            "median_search_time_reduction_percent": round(time_saved * 100, 1),
             "scope": "Local retrieval only; excludes model generation and network latency.",
         }
         print(json.dumps(report, ensure_ascii=False, indent=2))

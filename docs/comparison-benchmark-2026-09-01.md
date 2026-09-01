@@ -28,14 +28,14 @@ known expected page. The test warms both paths once before timing them.
 | SQLite FTS5, including incremental freshness scan and BM25 | 60/60 | 100% | 180.274 ms | 225.910 ms | 183.151 ms |
 | Full Markdown scan, reading and scoring all 500 files | 60/60 | 100% | 224.931 ms | 285.641 ms | 227.968 ms |
 
-The FTS5 path used **19.9% less median local retrieval time**. Expressed as throughput, the full-scan
-median divided by the FTS5 median is **1.248×**. The initial FTS5 index build took **3,894.788 ms**;
-that one-time cost is not hidden inside the warm-query comparison.
+The useful note appeared **44.657 ms sooner**, which is **19.9% less local searching time** on this
+test. The initial FTS5 index build took **3,894.788 ms**; that one-time cost is not hidden inside the
+warm-query comparison.
 
-FTS5 checks the metadata of all eligible pages for freshness, but it does not reopen unchanged
-Markdown bodies. It then returns at most five ranked candidates. The full-scan baseline reopens and
-scores all 500 bodies for every question. Five candidates versus 500 bodies is a 99% smaller set at
-the handoff to the agent, although the agent may choose to open fewer than five.
+FTS5 checks which notes changed without reopening the content of every unchanged note. It then shows
+the agent at most five notes that are likely to contain the answer. The other method reopens and
+checks all 500 notes for every question. In practical terms, the agent receives a short, useful
+reading list instead of searching the entire folder again.
 
 ## What this does and does not prove
 

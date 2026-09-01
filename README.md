@@ -35,29 +35,27 @@ for the human to configure.
 - **Freedom and sovereignty** — the context is a normal folder that can be copied, versioned,
   zipped, opened in another editor, or handed to another model.
 
-## Tested retrieval, without inflated claims
+## Tested on 500 notes
 
 On September 1, 2026, we generated **500 fictional OKF Markdown pages** and ran 20 distinct
 questions three times each on Windows 11 with an Intel Core i7-13620H. Both searchable methods found
 the expected page in the top five on all 60 measured queries.
 
-| Method | Correct top-five retrieval | Median local retrieval | What happens per query |
+| Setup | Did it find the right note? | Typical search time | In plain English |
 |---|---:|---:|---|
-| AI without access to a second brain | 0/60 | Not comparable | It cannot retrieve a fictional private page it cannot access. |
-| Full Markdown scan | 60/60 | 224.931 ms | Reads and scores all 500 files again. |
-| **Enhanced Second Brain FTS5** | **60/60** | **180.274 ms** | Checks freshness, searches BM25, and returns at most five candidates. |
+| AI without access to the notes | 0/60 | Not comparable | It cannot remember private information it cannot see. |
+| Read the whole Markdown folder every time | 60/60 | About 225 ms | Opens and checks all 500 notes again. |
+| **Enhanced Second Brain** | **60/60** | **About 180 ms** | Finds the few notes most likely to contain the answer. |
 
-In this test, FTS5 used **19.9% less median retrieval time**, or **1.25× the retrieval throughput**,
-than reading every Markdown file. The first index build took 3.895 seconds once; later searches used
-incremental synchronization. Returning five candidates instead of reading 500 file bodies also
-reduces the candidate set by 99% before the agent chooses what to open.
+In plain English: the useful note appeared about **45 milliseconds sooner**, which was **about 20%
+less searching time** in this test. More importantly, the AI was shown at most five likely notes
+instead of having to inspect all 500. It gets to the useful context with less irrelevant text and
+less work. The first setup took 3.9 seconds once; after that, only changed notes needed updating.
 
-These are deliberately local retrieval numbers, not a promise that every AI answer will be 19.9%
-faster. Model generation, network latency, hardware, corpus size, vocabulary, and alternative tools
-can dominate total response time. A plain exact-text tool may also beat FTS5 for a known filename or
-literal string; FTS5 is valuable here because it combines ranked retrieval, freshness, and usage
-tracking. See the [method and raw result](docs/comparison-benchmark-2026-09-01.md), then benchmark
-your own vault before making a broader claim.
+This does not mean every complete AI answer will be 20% faster. Writing the answer, network speed,
+computer speed, and the contents of the notes also take time. The result only measures how quickly
+the system found the right local note. See the [method and exact result](docs/comparison-benchmark-2026-09-01.md),
+then test your own notes before making a broader claim.
 
 ## Markdown and OKF are used together
 
