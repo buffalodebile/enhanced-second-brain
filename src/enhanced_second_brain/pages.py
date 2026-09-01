@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -67,14 +68,27 @@ def is_knowledge_path(vault: Path, path: Path) -> bool:
     ):
         return False
     return not any(
-        part in EXCLUDED_PARTS or part.startswith(".") for part in rel.parts[:-1]
+        part.casefold() in EXCLUDED_PARTS or part.startswith(".")
+        for part in rel.parts[:-1]
     )
 
 
 def iter_page_paths(vault: Path) -> Iterable[Path]:
-    for path in sorted(vault.rglob("*.md")):
-        if is_knowledge_path(vault, path):
-            yield path
+    root = vault.resolve()
+    for current, directories, files in os.walk(root, followlinks=False):
+        directories[:] = sorted(
+            directory
+            for directory in directories
+            if directory.casefold() not in EXCLUDED_PARTS
+            and not directory.startswith(".")
+        )
+        current_path = Path(current)
+        for filename in sorted(files):
+            if not filename.casefold().endswith(".md"):
+                continue
+            path = current_path / filename
+            if is_knowledge_path(root, path):
+                yield path
 
 
 def parse_markdown(path: Path, vault: Path | None = None) -> Page:

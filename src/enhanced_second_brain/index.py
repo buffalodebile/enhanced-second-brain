@@ -9,7 +9,7 @@ from typing import Any
 
 from .config import Settings
 from .pages import iter_page_paths, parse_markdown
-from .usage import record
+from .usage import record_many
 
 
 @dataclass
@@ -79,59 +79,70 @@ def _page_row(path: Path, vault: Path) -> tuple[str, str, str, str, str, str]:
     )
 
 
-def update(settings: Settings, *, verify_hashes: bool = False) -> dict[str, int]:
+def _update_connection(
+    settings: Settings,
+    connection: sqlite3.Connection,
+    *,
+    verify_hashes: bool = False,
+) -> dict[str, int]:
     vault = settings.vault
     current = {
         path.relative_to(vault).as_posix(): path for path in iter_page_paths(vault)
     }
     added = changed = removed = unchanged = 0
-    connection = connect(vault)
-    try:
-        indexed = {
-            row["path"]: row for row in connection.execute("SELECT * FROM documents")
-        }
-        for relative in sorted(indexed.keys() - current.keys()):
-            connection.execute("DELETE FROM pages WHERE path = ?", (relative,))
-            connection.execute("DELETE FROM documents WHERE path = ?", (relative,))
-            removed += 1
-        for relative, path in current.items():
-            stat = path.stat()
-            previous = indexed.get(relative)
-            quick_same = (
-                previous
-                and previous["mtime_ns"] == stat.st_mtime_ns
-                and previous["size"] == stat.st_size
-            )
-            digest = (
-                previous["content_hash"]
-                if quick_same and not verify_hashes
-                else _hash(path)
-            )
-            if previous and quick_same and digest == previous["content_hash"]:
-                unchanged += 1
-                continue
-            connection.execute("DELETE FROM pages WHERE path = ?", (relative,))
-            connection.execute(
-                "INSERT INTO pages(path,title,tags,description,headings,body) VALUES(?,?,?,?,?,?)",
-                _page_row(path, vault),
-            )
-            connection.execute(
-                "INSERT OR REPLACE INTO documents(path,content_hash,mtime_ns,size) VALUES(?,?,?,?)",
-                (relative, digest, stat.st_mtime_ns, stat.st_size),
-            )
-            if previous:
-                changed += 1
-            else:
-                added += 1
-        connection.commit()
-    finally:
-        connection.close()
+    indexed = {
+        row["path"]: row for row in connection.execute("SELECT * FROM documents")
+    }
+    for relative in sorted(indexed.keys() - current.keys()):
+        connection.execute("DELETE FROM pages WHERE path = ?", (relative,))
+        connection.execute("DELETE FROM documents WHERE path = ?", (relative,))
+        removed += 1
+    for relative, path in current.items():
+        stat = path.stat()
+        previous = indexed.get(relative)
+        quick_same = (
+            previous
+            and previous["mtime_ns"] == stat.st_mtime_ns
+            and previous["size"] == stat.st_size
+        )
+        digest = (
+            previous["content_hash"]
+            if quick_same and not verify_hashes
+            else _hash(path)
+        )
+        if previous and quick_same and digest == previous["content_hash"]:
+            unchanged += 1
+            continue
+        connection.execute("DELETE FROM pages WHERE path = ?", (relative,))
+        connection.execute(
+            "INSERT INTO pages(path,title,tags,description,headings,body) VALUES(?,?,?,?,?,?)",
+            _page_row(path, vault),
+        )
+        connection.execute(
+            "INSERT OR REPLACE INTO documents(path,content_hash,mtime_ns,size) VALUES(?,?,?,?)",
+            (relative, digest, stat.st_mtime_ns, stat.st_size),
+        )
+        if previous:
+            changed += 1
+        else:
+            added += 1
+    connection.commit()
     return {
         "added": added,
         "changed": changed,
         "removed": removed,
         "unchanged": unchanged,
     }
+
+
+def update(settings: Settings, *, verify_hashes: bool = False) -> dict[str, int]:
+    connection = connect(settings.vault)
+    try:
+        return _update_connection(
+            settings, connection, verify_hashes=verify_hashes
+        )
+    finally:
+        connection.close()
 
 
 def rebuild(settings: Settings) -> dict[str, int]:
@@ -151,10 +162,7 @@ def _fts_query(query: str) -> str:
 def query(
     settings: Settings, text: str, *, limit: int | None = None, track: bool = True
 ) -> list[SearchResult]:
-    update(settings)
     expression = _fts_query(text)
-    if not expression:
-        return []
     requested = limit or settings.max_results
     sql = """
         SELECT path, title, description,
@@ -165,6 +173,9 @@ def query(
     """
     connection = connect(settings.vault)
     try:
+        _update_connection(settings, connection)
+        if not expression:
+            return []
         rows = connection.execute(sql, (expression, requested)).fetchall()
     finally:
         connection.close()
@@ -179,8 +190,7 @@ def query(
         for r in rows
     ]
     if track:
-        for result in results:
-            record(settings, "injected", result.path)
+        record_many(settings, "injected", [result.path for result in results])
     return results
 
 

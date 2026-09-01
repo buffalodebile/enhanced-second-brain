@@ -41,8 +41,8 @@ The reviewed projects do not present the same default package of choices:
    archival. Content is never automatically deleted.
 6. A verified standard ZIP transports active knowledge, archives, configuration, usage history,
    and maintenance state while rebuilding machine-local search at the destination.
-7. The default installation is a standalone application with no required Python setup, scheduler,
-   plugin, database server, or provider-specific runtime.
+7. The default installation is a self-contained application directory delivered as one verified
+   ZIP, with no required Python setup, scheduler, plugin, database server, or provider-specific runtime.
 
 That combination appears uncommon and practically valuable, but an exhaustive proof that nobody has
 ever built the same private system is impossible. The defensible claim is narrower: this repository

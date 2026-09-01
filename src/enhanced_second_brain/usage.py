@@ -23,24 +23,42 @@ def ledger_path(vault: Path) -> Path:
 def record(
     settings: Settings, event: str, path: str | Path, *, at: str | None = None
 ) -> dict[str, Any]:
+    return record_many(settings, event, [path], at=at)[0]
+
+
+def record_many(
+    settings: Settings,
+    event: str,
+    paths: list[str | Path],
+    *,
+    at: str | None = None,
+) -> list[dict[str, Any]]:
     if event not in EVENTS:
         raise ValidationError(f"Unknown usage event: {event}")
-    resolved, relative = safe_relative(settings.vault, path, must_exist=True)
-    if not is_knowledge_path(settings.vault, resolved):
-        raise ValidationError("Usage can only be recorded for knowledge Markdown pages")
+    stamp = at or datetime.now(UTC).isoformat(timespec="seconds")
+    payloads: list[dict[str, Any]] = []
+    for path in paths:
+        resolved, relative = safe_relative(settings.vault, path, must_exist=True)
+        if not is_knowledge_path(settings.vault, resolved):
+            raise ValidationError("Usage can only be recorded for knowledge Markdown pages")
+        payloads.append(
+            {
+                "at": stamp,
+                "event": event,
+                "path": relative,
+                "weight": settings.usage.weights[event],
+            }
+        )
+    if not payloads:
+        return []
     ledger = ledger_path(settings.vault)
     ledger.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "at": at or datetime.now(UTC).isoformat(timespec="seconds"),
-        "event": event,
-        "path": relative,
-        "weight": settings.usage.weights[event],
-    }
     lock = FileLock(str(ledger) + ".lock", timeout=10)
     with lock, ledger.open("a", encoding="utf-8", newline="\n") as handle:
-        handle.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
+        for payload in payloads:
+            handle.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
         handle.flush()
-    return payload
+    return payloads
 
 
 def events(vault: Path) -> list[dict[str, Any]]:

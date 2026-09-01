@@ -6,7 +6,7 @@ location of an existing notes folder, if they have one.
 
 ## Goal
 
-Install one standalone Enhanced Second Brain application, initialize or adopt the vault, enable
+Install one self-contained Enhanced Second Brain application bundle, initialize or adopt the vault, enable
 agent-driven automatic maintenance, connect the current agent through its normal persistent
 instructions, and verify the result. Do not ask the human to install Python, a package manager, a
 plugin, or a database server. Do not add a dependency on one model provider.
@@ -19,17 +19,22 @@ plugin, or a database server. Do not add a dependency on one model provider.
 
    | System | Asset |
    |---|---|
-   | Windows x64 | `enhanced-second-brain-windows-x64.exe` |
-   | Linux x64 | `enhanced-second-brain-linux-x64` |
-   | macOS Apple Silicon | `enhanced-second-brain-macos-arm64` |
-   | macOS Intel | `enhanced-second-brain-macos-x64` |
+   | Windows x64 | `enhanced-second-brain-windows-x64.zip` |
+   | Linux x64 | `enhanced-second-brain-linux-x64.zip` |
+   | macOS Apple Silicon | `enhanced-second-brain-macos-arm64.zip` |
+   | macOS Intel | `enhanced-second-brain-macos-x64.zip` |
 
-3. Download the asset and `SHA256SUMS` from the latest GitHub release. Verify the asset hash before
-   executing it. Stop and report an integrity failure if the checksum does not match.
-4. Store the application in a stable user-owned directory:
-   - Windows: `%LOCALAPPDATA%\EnhancedSecondBrain\enhanced-second-brain.exe`
-   - macOS/Linux: `${XDG_DATA_HOME:-~/.local/share}/enhanced-second-brain/enhanced-second-brain`
-5. On macOS/Linux, make the application executable. On macOS, if Gatekeeper quarantined the
+3. Download the ZIP asset and `SHA256SUMS` from the latest GitHub release. Verify the ZIP hash before
+   extracting it. Stop and report an integrity failure if the checksum does not match.
+4. Extract the ZIP into a temporary directory, then replace the stable `app` directory with the
+   extracted `enhanced-second-brain/` directory. Keep its `_internal` directory beside the
+   executable; never copy only the executable:
+   - Windows application directory: `%LOCALAPPDATA%\EnhancedSecondBrain\app`
+   - Windows executable: `%LOCALAPPDATA%\EnhancedSecondBrain\app\enhanced-second-brain.exe`
+   - macOS/Linux application directory: `${XDG_DATA_HOME:-~/.local/share}/enhanced-second-brain/app`
+   - macOS/Linux executable: `${XDG_DATA_HOME:-~/.local/share}/enhanced-second-brain/app/enhanced-second-brain`
+   Re-running the protocol replaces the complete application directory after checksum verification.
+5. On macOS/Linux, make the extracted application executable. On macOS, if Gatekeeper quarantined the
    downloaded file, explain the signed-code limitation before asking for any security override.
 6. Run:
 
@@ -60,7 +65,7 @@ When the human asks for an export, first run `reconcile`, then run:
 Choose a destination outside the vault. Report the final path, SHA-256, file count, and verification
 status. Explain that the ZIP contains private knowledge and is not encrypted automatically.
 
-To restore on another machine, download and verify the matching standalone application as above,
+To restore on another machine, download, verify, and extract the matching application bundle as above,
 choose a new path that does not already exist, and run:
 
 ```text
@@ -74,5 +79,5 @@ rebuilds FTS5. `install` then regenerates machine-specific instructions and agen
 new managed instruction block to the current agent as in step 7. Never copy an old machine's agent
 instructions or search cache as a substitute for this regeneration.
 
-Re-running the same procedure upgrades the application and reconciles the vault idempotently. A
+Re-running the same procedure upgrades the complete application bundle and reconciles the vault idempotently. A
 dated safety copy is created before any existing Markdown file is migrated.

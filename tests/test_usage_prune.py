@@ -9,7 +9,7 @@ from conftest import write_page
 from enhanced_second_brain.config import ArchiveConfig, Settings
 from enhanced_second_brain.errors import SafetyError, ValidationError
 from enhanced_second_brain.prune import apply, candidates, restore
-from enhanced_second_brain.usage import aggregate, events, record
+from enhanced_second_brain.usage import aggregate, events, record, record_many
 
 
 def test_weighted_usage_is_locked_and_concurrent(settings, vault) -> None:
@@ -28,6 +28,24 @@ def test_weighted_usage_is_locked_and_concurrent(settings, vault) -> None:
     assert len(events(vault)) == 20
     assert aggregate(settings)["concepts/used.md"]["effective_usage"] == 14.0
     assert aggregate(settings)["concepts/used.md"]["decayed_effective_usage"] > 13.9
+
+
+def test_batch_usage_uses_one_timestamp_and_keeps_every_event(settings, vault) -> None:
+    write_page(
+        vault, "concepts/a.md", title="A", description="A page", body="# A"
+    )
+    write_page(
+        vault, "concepts/b.md", title="B", description="B page", body="# B"
+    )
+    rows = record_many(
+        settings,
+        "injected",
+        ["concepts/a.md", "concepts/b.md"],
+        at="2026-09-01T00:00:00+00:00",
+    )
+    assert [row["path"] for row in rows] == ["concepts/a.md", "concepts/b.md"]
+    assert {row["at"] for row in rows} == {"2026-09-01T00:00:00+00:00"}
+    assert len(events(vault)) == 2
 
 
 def test_prune_safeguards_archive_and_restore(vault) -> None:

@@ -3,6 +3,7 @@ from __future__ import annotations
 from conftest import write_page
 
 from enhanced_second_brain.index import query, update
+from enhanced_second_brain.pages import iter_page_paths
 from enhanced_second_brain.utility import backlinks
 
 
@@ -54,3 +55,18 @@ def test_backlinks_protect_linked_pages_without_another_engine(vault) -> None:
     assert incoming["concepts/a.md"] == 0
     assert incoming["concepts/b.md"] == 1
     assert incoming["concepts/c.md"] == 1
+
+
+def test_page_walk_prunes_operational_directories(vault) -> None:
+    write_page(
+        vault, "concepts/visible.md", title="Visible", description="Visible", body="# Visible"
+    )
+    hidden = vault / ".git" / "objects" / "hidden.md"
+    hidden.parent.mkdir(parents=True)
+    hidden.write_text("# Hidden", encoding="utf-8")
+    archived = vault / "_archives" / "old.md"
+    archived.parent.mkdir(parents=True)
+    archived.write_text("# Archived", encoding="utf-8")
+    assert [path.relative_to(vault).as_posix() for path in iter_page_paths(vault)] == [
+        "concepts/visible.md"
+    ]

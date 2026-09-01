@@ -20,12 +20,13 @@ Send this message to any local AI agent that can access files and run commands:
 > Follow AGENT_INSTALL.md, use my existing notes folder if I provide one, and verify everything.
 
 That is the human installation flow. The agent detects the machine, downloads one verified
-standalone application, adopts or creates the knowledge folder, builds search, connects its own
+self-contained application bundle, adopts or creates the knowledge folder, builds search, connects its own
 persistent instructions, and runs a health check. Maintenance then happens naturally on future
 agent requests; no Windows task, cron job, or background service is created by default.
 
 There is no Windows installer to click and no runtime, package manager, plugin, or database service
-for the human to configure.
+for the human to configure. The bundle is a normal ZIP that the agent verifies and extracts; its
+small runtime directory is what avoids re-extracting a large single-file program on every request.
 
 ## What you gain
 
@@ -185,6 +186,12 @@ The ingredients are not unprecedented. Other projects already provide Markdown p
 semantic second brains, or persistent agent memory. The contribution here is a deliberately small,
 provider-neutral combination focused on portable OKF files, zero-model lexical retrieval,
 usage-aware reversible cleanup, and one-file export. See [what is actually distinctive](docs/positioning-and-novelty.md).
+
+The normal `context` path is also optimized for repeated agent requests: it uses one process, one
+SQLite connection, one locked telemetry append, and skips excluded directories during freshness
+checks. The release uses a self-contained directory bundle rather than a compressed one-file
+executable, because repeatedly unpacking that executable was much slower. See the
+[runtime benchmark and exact scope](docs/runtime-benchmark-2026-09-01.md).
 
 ## Limits
 

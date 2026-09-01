@@ -48,17 +48,13 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            name: enhanced-second-brain-linux-x64
-            asset: dist/enhanced-second-brain-linux-x64
+            asset: enhanced-second-brain-linux-x64.zip
           - os: windows-latest
-            name: enhanced-second-brain-windows-x64
-            asset: dist/enhanced-second-brain-windows-x64.exe
+            asset: enhanced-second-brain-windows-x64.zip
           - os: macos-latest
-            name: enhanced-second-brain-macos-arm64
-            asset: dist/enhanced-second-brain-macos-arm64
+            asset: enhanced-second-brain-macos-arm64.zip
           - os: macos-15-intel
-            name: enhanced-second-brain-macos-x64
-            asset: dist/enhanced-second-brain-macos-x64
+            asset: enhanced-second-brain-macos-x64.zip
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -66,17 +62,19 @@ jobs:
         with:
           python-version: "3.13"
       - run: python -m pip install . pyinstaller
-      - run: python -m PyInstaller --onefile --name "${{ matrix.name }}" standalone.py
+      - run: python -m PyInstaller --onedir --name enhanced-second-brain standalone.py
+      - run: python scripts/package_standalone.py --source dist/enhanced-second-brain --output "dist/${{ matrix.asset }}"
       - name: Test the agent-driven macOS/Linux installation
         if: runner.os != 'Windows'
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/esb-agent"
-          cp "$PWD/${{ matrix.asset }}" "$RUNNER_TEMP/esb-agent/enhanced-second-brain"
-          chmod +x "$RUNNER_TEMP/esb-agent/enhanced-second-brain"
-          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" install
-          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" context "installation verification"
-          "$RUNNER_TEMP/esb-agent/enhanced-second-brain" --vault "$RUNNER_TEMP/SecondBrain" doctor
+          python -m zipfile -e "$PWD/dist/${{ matrix.asset }}" "$RUNNER_TEMP/esb-agent"
+          engine="$RUNNER_TEMP/esb-agent/enhanced-second-brain/enhanced-second-brain"
+          chmod +x "$engine"
+          "$engine" --vault "$RUNNER_TEMP/SecondBrain" install
+          "$engine" --vault "$RUNNER_TEMP/SecondBrain" context "installation verification"
+          "$engine" --vault "$RUNNER_TEMP/SecondBrain" doctor
           test -f "$RUNNER_TEMP/SecondBrain/AGENTS.md"
           test -z "$(find "$RUNNER_TEMP/esb-agent" -type f -name 'python*' -print -quit)"
       - name: Test the agent-driven Windows installation
@@ -86,8 +84,8 @@ jobs:
           $appHome = Join-Path $env:RUNNER_TEMP 'esb-agent'
           $vault = Join-Path $env:RUNNER_TEMP 'SecondBrain'
           New-Item -ItemType Directory -Path $appHome | Out-Null
-          $engine = Join-Path $appHome 'enhanced-second-brain.exe'
-          Copy-Item -LiteralPath '${{ matrix.asset }}' -Destination $engine
+          Expand-Archive -LiteralPath 'dist/${{ matrix.asset }}' -DestinationPath $appHome
+          $engine = Join-Path $appHome 'enhanced-second-brain\enhanced-second-brain.exe'
           & $engine --vault $vault install
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & $engine --vault $vault context 'installation verification'
@@ -98,8 +96,8 @@ jobs:
           if (Get-ChildItem -LiteralPath $appHome -Recurse -Filter 'python*.exe') { exit 1 }
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
-          path: ${{ matrix.asset }}
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
 
   secret-scan:
     runs-on: ubuntu-latest

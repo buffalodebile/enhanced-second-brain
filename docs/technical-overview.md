@@ -19,7 +19,7 @@ them.
 - **Agent-driven maintenance:** a portable prompt counter and timestamps trigger reconciliation,
   backup, and semantic archive review on the next request. Native scheduling is optional. See
   [automation](automation.md).
-- **One standalone application:** CI bundles the engine separately for Windows, Linux, Intel Mac,
+- **One verified application ZIP:** CI bundles the engine separately for Windows, Linux, Intel Mac,
   and Apple Silicon Mac. The installing agent downloads that single versioned file and verifies its
   checksum. No separate runtime, package manager, plugin, or background database service is needed.
 

@@ -9,7 +9,7 @@ copy of every Markdown file requiring migration is created before it is changed.
 ## The agent cannot download the application
 
 Check the internet connection and GitHub release access. Corporate networks may need to allow
-release downloads. The agent must download both the matching standalone application and
+release downloads. The agent must download both the matching self-contained application ZIP and
 `SHA256SUMS`, then verify integrity before execution.
 
 ## “No vault configured”
@@ -19,7 +19,8 @@ Pass `--vault`, set `ESB_VAULT_PATH`, or create `second-brain.toml`. The toolkit
 ## FTS5 is unavailable
 
 Ask the agent to run the internal `doctor` operation from the [engine reference](engine-reference.md).
-FTS5 is bundled in the standalone application.
+FTS5 is bundled in the extracted application directory. Keep `_internal` beside the executable;
+copying the executable alone breaks the self-contained runtime.
 
 ## Search misses a paraphrase
 
