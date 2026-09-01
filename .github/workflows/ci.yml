@@ -79,14 +79,19 @@ jobs:
           test -z "$(find "$RUNNER_TEMP/esb-agent" -type f -name 'python*' -print -quit)"
       - name: Test the agent-driven Windows installation
         if: runner.os == 'Windows'
-        shell: cmd
+        shell: pwsh
         run: |
-          mkdir "%RUNNER_TEMP%\esb-agent"
-          copy /Y "%CD%\${{ matrix.asset }}" "%RUNNER_TEMP%\esb-agent\enhanced-second-brain.exe"
-          "%RUNNER_TEMP%\esb-agent\enhanced-second-brain.exe" --vault "%RUNNER_TEMP%\SecondBrain" install --dry-run-automation
-          "%RUNNER_TEMP%\esb-agent\enhanced-second-brain.exe" --vault "%RUNNER_TEMP%\SecondBrain" doctor
-          if not exist "%RUNNER_TEMP%\SecondBrain\AGENTS.md" exit /b 1
-          for /r "%RUNNER_TEMP%\esb-agent" %%F in (python*.exe) do exit /b 1
+          $appHome = Join-Path $env:RUNNER_TEMP 'esb-agent'
+          $vault = Join-Path $env:RUNNER_TEMP 'SecondBrain'
+          New-Item -ItemType Directory -Path $appHome | Out-Null
+          $engine = Join-Path $appHome 'enhanced-second-brain.exe'
+          Copy-Item -LiteralPath '${{ matrix.asset }}' -Destination $engine
+          & $engine --vault $vault install --dry-run-automation
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $engine --vault $vault doctor
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path (Join-Path $vault 'AGENTS.md'))) { exit 1 }
+          if (Get-ChildItem -LiteralPath $appHome -Recurse -Filter 'python*.exe') { exit 1 }
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
