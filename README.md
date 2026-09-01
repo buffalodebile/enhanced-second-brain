@@ -35,11 +35,11 @@ for the human to configure.
 - **Freedom and sovereignty** — the context is a normal folder that can be copied, versioned,
   zipped, opened in another editor, or handed to another model.
 
-## Tested on 500 notes
+## Measured result
 
-On September 1, 2026, we generated **500 fictional OKF Markdown pages** and ran 20 distinct
-questions three times each on Windows 11 with an Intel Core i7-13620H. Both searchable methods found
-the expected page in the top five on all 60 measured queries.
+On September 1, 2026, we measured 60 searches across **500 OKF Markdown notes** on Windows 11 with
+an Intel Core i7-13620H. Enhanced Second Brain found the right note every time and took about
+180 milliseconds, compared with about 225 milliseconds when rereading the whole folder.
 
 | Setup | Did it find the right note? | Typical search time | In plain English |
 |---|---:|---:|---|
