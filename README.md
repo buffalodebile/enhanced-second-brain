@@ -83,6 +83,12 @@ computer speed, and the contents of the notes also take time. The result only me
 the system found the right local note. See the [method and exact result](docs/comparison-benchmark-2026-09-01.md),
 then test your own notes before making a broader claim.
 
+A same-machine scaling follow-up found 24.1% less retrieval time at 500 notes and 23.5% at 1,000.
+At 2,500 notes, the current safety-first freshness scan made the FTS5 path 12.9% slower than a warm
+full-folder scan. Enhanced Second Brain is therefore optimized for ordinary personal vaults, not
+claimed as the fastest possible engine at every corpus size. The exact runs and limitation are in
+the [scaling results](docs/comparison-benchmark-2026-09-01.md#scaling-follow-up).
+
 ## Markdown and OKF are used together
 
 OKF does not replace Markdown. [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
@@ -174,6 +180,11 @@ maintenance, and reversible cleanup while preserving that simple model.
 SQLite FTS5 is deliberately the default because it is mature, embedded, cross-platform, and
 zero-configuration. The [technical overview](docs/technical-overview.md) explains the database choice
 and when a replicated alternative would make sense.
+
+The ingredients are not unprecedented. Other projects already provide Markdown personal wikis,
+semantic second brains, or persistent agent memory. The contribution here is a deliberately small,
+provider-neutral combination focused on portable OKF files, zero-model lexical retrieval,
+usage-aware reversible cleanup, and one-file export. See [what is actually distinctive](docs/positioning-and-novelty.md).
 
 ## Limits
 

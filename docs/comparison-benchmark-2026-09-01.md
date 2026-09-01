@@ -59,3 +59,27 @@ python scripts/benchmark_comparison.py --pages 500 --queries 20 --runs 3 --top-k
 
 The script creates the test vault in a temporary directory, rebuilds FTS5, warms both methods,
 prints a machine-readable JSON report, and removes the temporary corpus afterward.
+
+## Scaling follow-up
+
+A second set of same-machine runs used the same generator, query construction, warmed paths, top-five
+criterion, and implementation. The number of queries and repetitions was reduced for larger corpora,
+so each row should be interpreted independently rather than as one pooled benchmark.
+
+| Notes | Measured queries per method | FTS5 median | Full scan median | FTS5 change | Recall |
+|---:|---:|---:|---:|---:|---:|
+| 500 | 100 | 195.646 ms | 257.738 ms | 24.1% less time | 100% / 100% |
+| 1,000 | 30 | 454.354 ms | 593.986 ms | 23.5% less time | 100% / 100% |
+| 2,500 | 10 | 1,033.806 ms | 915.513 ms | 12.9% more time | 100% / 100% |
+
+The reversal at 2,500 notes has a concrete cause: every safe query currently walks file metadata to
+detect external additions, edits, renames, and removals before searching SQLite. That work scales
+with the number of files even though unchanged bodies are not reparsed. The warmed full-scan baseline
+benefits from the operating-system file cache and eventually becomes faster than this conservative
+freshness path.
+
+This does not invalidate the retrieval design for a normal personal vault. It defines its current
+operating envelope and an optimization target: large-vault acceleration requires a cheaper reliable
+change detector, an explicit freshness interval, or an optional filesystem watcher. None is enabled
+silently because immediate cross-platform freshness and zero background service are current product
+constraints.
