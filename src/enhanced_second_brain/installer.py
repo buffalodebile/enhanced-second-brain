@@ -3,12 +3,14 @@ from __future__ import annotations
 import os
 import shlex
 import shutil
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from .automation import _executable, install_automation
 from .config import DEFAULT_TOML, resolve_settings
+from .errors import SafetyError
 from .index import rebuild
 from .maintenance import initialize as initialize_maintenance
 from .okf import audit_vault, migrate_vault
@@ -123,6 +125,42 @@ def _initialize(vault: Path) -> None:
         encoding="utf-8",
         newline="\n",
     )
+    local = vault / "_local"
+    if local.is_symlink():
+        raise SafetyError("The machine-local credential directory must not be a symlink.")
+    local.mkdir(mode=0o700, exist_ok=True)
+    (local / "documents").mkdir(mode=0o700, exist_ok=True)
+    files = {
+        ".env": (
+            "# Machine-local credentials: never commit, export or paste into agent prompts.\n"
+            "# Add your own NAME=value entries here; no working credentials are provided.\n"
+        ),
+        "README.md": (
+            "# Machine-local storage\n\n"
+            "Keep credentials in `.env` and private documents in `documents/`.\n"
+            "This directory is excluded from Git, retrieval and portable bundles.\n"
+            "Installation never overwrites existing local files.\n"
+            "The env file is plain text. Restrict access with your operating system.\n"
+            "Applications must explicitly load their required configuration; this file "
+            "is not automatically injected into applications or agents.\n"
+        ),
+    }
+    for name, content in files.items():
+        try:
+            descriptor = os.open(local / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            continue
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
+            if os.name == "nt" and name == ".env":
+                account = subprocess.check_output(
+                    ["whoami"], text=True, stderr=subprocess.DEVNULL
+                ).strip()
+                subprocess.run(
+                    ["icacls", str(local / name), "/inheritance:r", "/grant:r",
+                     f"{account}:F", "*S-1-5-18:F", "*S-1-5-32-544:F"],
+                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+            stream.write(content)
 
 
 def install(
@@ -157,6 +195,7 @@ def install(
     result = {
         "passed": True,
         "vault": str(vault),
+        "local_credentials": str(vault / "_local" / ".env"),
         "preflight_backup": str(backup_root) if backup_root else None,
         "migration": migration,
         "audit": audit,

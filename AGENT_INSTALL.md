@@ -46,6 +46,11 @@ plugin, or a database server. Do not add a dependency on one model provider.
 7. Read the managed block written to `<vault>/AGENTS.md`. Connect that block to the current agent's
    native persistent-instruction mechanism so context lookup also works outside the vault. Preserve
    all existing user instructions and do not create a provider-specific dependency inside the vault.
+   Installation creates `<vault>/_local/.env` and `_local/documents/` by default, preserves existing
+   local files, and adds Git exclusions. Report this credential path to the human; never read or
+   display its contents merely to verify installation. Keep credential values out of knowledge
+   pages and prompts. On Windows, restrict the credential file's ACL to the current user and
+   necessary system administrators; on macOS/Linux, new local files use owner-only permissions.
 8. Run `<application> --vault <vault> context "installation verification"`. Verify that its JSON
    contains `context` and `maintenance`, then verify that `doctor` reports `fts5: true`, a valid
    strict OKF audit, an existing index, and maintenance state. Do not create operating-system tasks

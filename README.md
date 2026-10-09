@@ -24,6 +24,10 @@ self-contained application bundle, adopts or creates the knowledge folder, build
 persistent instructions, and runs a health check. Maintenance then happens naturally on future
 agent requests; no Windows task, cron job, or background service is created by default.
 
+Installation also creates a private `<vault>/_local/.env` and `_local/documents/` by default.
+Credentials stay outside Git, search, agent context and portable exports. Existing local files
+are preserved on upgrade; new credential files receive restricted filesystem permissions.
+
 There is no Windows installer to click and no runtime, package manager, plugin, or database service
 for the human to configure. The bundle is a normal ZIP that the agent verifies and extracts; its
 small runtime directory is what avoids re-extracting a large single-file program on every request.

@@ -49,7 +49,10 @@ tasks, Git history, editor preferences, passwords, or a copy of the model itself
 
 Keep the second brain's credentials in `<vault>/_local/.env`, and private identity documents or
 infrastructure notes under `<vault>/_local/`. This directory is excluded from page discovery,
-FTS5, OKF migration, portable bundles and Git snapshots. Installation adds `_local/` and real
+FTS5, OKF migration, portable bundles and Git snapshots. The installer creates the credential
+file and `_local/documents/` automatically, without overwriting existing local files, and reports
+the credential path in its result. New credential files have owner-only POSIX permissions, or
+a Windows ACL restricted to the current user, SYSTEM and Administrators. Installation adds `_local/` and real
 environment/key files to `.gitignore`; backup refuses a committed or staged `_local/` directory.
 The local credential file is plain text, not an encrypted password manager. Restrict filesystem
 access and use disk encryption or a separate encrypted offline backup when appropriate.
