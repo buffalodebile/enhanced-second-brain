@@ -45,6 +45,32 @@ This distinction matters. The ZIP contains the **portable knowledge context**, i
 knowledge and the usage signals needed for governance. It does not claim to contain operating-system
 tasks, Git history, editor preferences, passwords, or a copy of the model itself.
 
+## Machine-local credentials
+
+Keep the second brain's credentials in `<vault>/_local/.env`, and private identity documents or
+infrastructure notes under `<vault>/_local/`. This directory is excluded from page discovery,
+FTS5, OKF migration, portable bundles and Git snapshots. Installation adds `_local/` and real
+environment/key files to `.gitignore`; backup refuses a committed or staged `_local/` directory.
+The local credential file is plain text, not an encrypted password manager. Restrict filesystem
+access and use disk encryption or a separate encrypted offline backup when appropriate.
+
+Do not paste credential values into knowledge pages, generated agent instructions, logs or model
+prompts. Keep only service names, configuration variable names and non-sensitive verification
+methods in the portable corpus. Templates may contain placeholders, never working credentials.
+Applications can still require their own Git-ignored `.env` or Docker environment files. A shared
+file does not automatically load into every application, and browser-visible configuration keys
+must be distinguished from server credentials.
+
+Git ignores and export exclusions do not remove secrets from older commits or revoke a leaked
+credential. Inspect reachable history separately and rotate any confirmed exposed private key or
+token through its provider; rewriting shared history is a separate coordinated operation.
+
+The public toolkit repository also scans reachable history in CI with Gitleaks. Contributors can
+install the same staged-commit check with `pre-commit install` using the supplied configuration.
+These checks print redacted findings. They detect common credential formats; they cannot guarantee
+that every personal fact or every possible password is recognized. CI runs after a push, so the
+local check and correct Git exclusions remain necessary to prevent publication in the first place.
+
 ## Export with a local agent
 
 The normal human flow is one request:

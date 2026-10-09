@@ -51,7 +51,7 @@ def _secret_like_untracked(vault: Path) -> list[str]:
         {
             path
             for path in (ordinary + "\0" + ignored).split("\0")
-            if path and SECRET_NAME.search(Path(path).name)
+            if path and "_local" not in Path(path).parts and SECRET_NAME.search(Path(path).name)
         }
     )
 
@@ -72,6 +72,9 @@ def backup(settings: Settings) -> dict[str, Any]:
         raise SafetyError(
             f"Expected branch {main}, found {current_branch or 'detached HEAD'}"
         )
+    committed = _git(vault, "ls-tree", "-r", "--name-only", head_before).splitlines()
+    if any("_local" in Path(path).parts for path in committed):
+        raise SafetyError("Committed machine-local files refused; remove them before backup")
     _git(vault, "push", remote, f"{head_before}:refs/heads/{main}")
     if _remote_sha(vault, remote, main) != head_before:
         raise SafetyError("Remote main SHA does not match local HEAD")
@@ -100,6 +103,9 @@ def backup(settings: Settings) -> dict[str, Any]:
             if path.exists():
                 _git(vault, "add", "-f", "--", path.relative_to(vault).as_posix(), env=env)
         tree_one = _git(vault, "write-tree", env=env)
+        snapshot_paths = _git(vault, "ls-tree", "-r", "--name-only", tree_one).splitlines()
+        if any("_local" in Path(path).parts for path in snapshot_paths):
+            raise SafetyError("Snapshot contains machine-local files; check _local/ Git exclusion")
         _git(vault, "add", "-A", env=env)
         for path in private_state:
             if path.exists():

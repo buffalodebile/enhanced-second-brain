@@ -12,6 +12,7 @@ import yaml
 from .errors import SafetyError, ValidationError
 
 EXCLUDED_PARTS = {
+    "_local",
     "_raw",
     "_archives",
     "_meta",

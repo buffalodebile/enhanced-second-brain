@@ -29,7 +29,7 @@ def test_backup_uses_isolated_index_and_includes_private_ledger(tmp_path: Path) 
         vault, "concepts/base.md", title="Base", description="Base page", body="# Base"
     )
     (vault / ".gitignore").write_text(
-        "_meta/usage.jsonl\n_meta/maintenance.json\n", encoding="utf-8"
+        "_meta/usage.jsonl\n_meta/maintenance.json\n_local/\n", encoding="utf-8"
     )
     git(vault, "add", ".")
     git(vault, "commit", "-m", "initial")
@@ -49,6 +49,10 @@ def test_backup_uses_isolated_index_and_includes_private_ledger(tmp_path: Path) 
     (vault / "_meta" / "maintenance.json").write_text(
         '{"total_turns": 4}\n', encoding="utf-8"
     )
+    local = vault / "_local"
+    local.mkdir()
+    (local / ".env").write_text("PASSWORD=synthetic-local-only\n")
+    (local / "notes.md").write_text("# Private machine notes")
     head_before = git(vault, "rev-parse", "HEAD")
     index_before = git(vault, "write-tree")
     status_before = git(vault, "status", "--porcelain=v1", "--untracked-files=all")
@@ -74,6 +78,7 @@ def test_backup_uses_isolated_index_and_includes_private_ledger(tmp_path: Path) 
     assert "concepts/dirty.md" in snapshot_files
     assert "_meta/usage.jsonl" in snapshot_files
     assert "_meta/maintenance.json" in snapshot_files
+    assert not any(path.startswith("_local/") for path in snapshot_files)
 
 
 def test_backup_captures_ignored_ledger_without_other_changes(tmp_path: Path) -> None:
@@ -124,3 +129,27 @@ def test_backup_refuses_secret_like_untracked_names(tmp_path: Path, name: str) -
     (vault / name).write_text("synthetic placeholder", encoding="utf-8")
     with pytest.raises(SafetyError, match="Secret-like"):
         backup(Settings(vault=vault, config_file=None))
+
+
+@pytest.mark.parametrize("committed", [True, False])
+def test_backup_refuses_machine_local_files_before_snapshot_publication(tmp_path, committed):
+    vault = tmp_path / "vault"
+    remote = tmp_path / "remote.git"
+    vault.mkdir()
+    subprocess.check_call(["git", "init", "--bare", str(remote)])
+    git(vault, "init", "-b", "main")
+    git(vault, "config", "user.name", "Synthetic Tester")
+    git(vault, "config", "user.email", "synthetic")
+    write_page(vault, "concepts/base.md", title="Base", description="Base", body="# Base")
+    git(vault, "add", ".")
+    git(vault, "commit", "-m", "initial")
+    git(vault, "remote", "add", "origin", str(remote))
+    private = vault / "_local" / "notes.md"
+    private.parent.mkdir()
+    private.write_text("Private machine-only information")
+    if committed:
+        git(vault, "add", "_local/notes.md")
+        git(vault, "commit", "-m", "synthetic accidental local commit")
+    with pytest.raises(SafetyError, match="machine-local"):
+        backup(Settings(vault=vault, config_file=None))
+    assert not git(vault, "ls-remote", "origin", "refs/heads/backup-snapshot")

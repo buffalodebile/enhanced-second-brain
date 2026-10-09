@@ -28,6 +28,7 @@ def _instruction_block(vault: Path, executable: str) -> str:
 - If `context` reports an archive review, read every candidate and its relationships. Preserve rare durable decisions even when they are old. Then run `{command} maintenance review [only-the-pages-that-are-truly-safe-to-archive]`; an empty selection records that nothing should move.
 - When the user asks for a portable copy, run `{command} reconcile`, then `{command} bundle export <private-destination.zip>` and report its SHA-256.
 - The OKF Markdown files are authoritative. FTS5 is a local, disposable search index.
+- Keep credentials in `_local/.env` and private documents in `_local/`. Never put their values in notes, prompts, logs, commits or exports. `_local/` is excluded from retrieval, migration and portable bundles; it must also stay Git-ignored. Application-specific local environment files may remain necessary; never publish them.
 - This protocol is independent of the model provider. It requires a local agent with filesystem and command access; a browser-only chat cannot access local files by itself.
 <!-- enhanced-second-brain:end -->
 """
@@ -97,6 +98,15 @@ def _initialize(vault: Path) -> None:
         config.write_text(DEFAULT_TOML, encoding="utf-8", newline="\n")
     ignore = vault / ".gitignore"
     additions = [
+        "_local/",
+        ".env",
+        ".env.*",
+        "!.env.example",
+        "!.env.template",
+        "*.pem",
+        "*.key",
+        "*.p12",
+        "*.pfx",
         "_meta/cache/",
         "_meta/usage.jsonl",
         "_meta/usage.jsonl.lock",

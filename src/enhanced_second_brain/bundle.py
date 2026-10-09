@@ -30,6 +30,7 @@ WINDOWS_RESERVED_NAMES = {
 }
 
 EXCLUDED_DIRECTORIES = {
+    "_local",
     ".git",
     ".obsidian",
     "_meta/cache",

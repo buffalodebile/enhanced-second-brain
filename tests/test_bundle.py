@@ -48,6 +48,11 @@ def test_portable_bundle_round_trip_keeps_context_not_machine_state(
     cache.write_bytes(b"disposable")
     (vault / "AGENTS.md").write_text("machine-specific", encoding="utf-8")
     (vault / ".gitignore").write_text("_meta/cache/\n", encoding="utf-8")
+    private = vault / "_local"
+    private.mkdir()
+    (private / ".env").write_text("LOCAL_PASSWORD=synthetic-local-only\n")
+    (private / "identity.pdf").write_bytes(b"private-document")
+    (private / "notes.md").write_text("Unstructured private notes must not be audited.")
 
     output = tmp_path / "copies" / "brain.zip"
     result = export_bundle(settings, output)
@@ -65,6 +70,7 @@ def test_portable_bundle_round_trip_keeps_context_not_machine_state(
         assert "_meta/cache/esb-fts.sqlite3" not in names
         assert "AGENTS.md" not in names
         assert ".gitignore" not in names
+        assert not any(name.startswith("_local/") for name in names)
         manifest = json.loads(bundle.read(MANIFEST_NAME))
         assert manifest["format"] == BUNDLE_FORMAT
         assert manifest["format_version"] == BUNDLE_VERSION
