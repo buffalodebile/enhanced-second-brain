@@ -22,7 +22,7 @@ def _instruction_block(vault: Path, executable: str) -> str:
     return f"""<!-- enhanced-second-brain:start -->
 ## Enhanced Second Brain — provider-neutral automatic context
 
-- At the start of every user request, run `{command} context "<the user's exact request>"` unless an Enhanced Second Brain hook already injected context for this turn. This one command advances the lightweight maintenance cadence, incrementally updates FTS5, returns relevant pages, and records them as injected.
+- At the start of every user request, use the context and capture token injected by the native hook. If no hook injected them, send a generic begin event as described below; do not run a separate context lookup first. `{command} context "<the user's exact request>"` remains available for explicit manual lookup. The hook's single context operation advances maintenance, updates FTS5, returns relevant pages and records injections.
 - Use the returned context only when relevant. If the command reports maintenance work or an archive review, complete the included instruction before the final answer.
 - Read only relevant results with `{command} page read <path>`.
 - After using a page in an answer, run `{command} usage record cited <path>`.
