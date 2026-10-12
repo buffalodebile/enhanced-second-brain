@@ -1,5 +1,11 @@
 # Agent-driven automation
 
+Native Codex/Claude hooks now inject `context` at prompt submission and verify durable-knowledge
+checkpoints at turn completion. Installation preserves existing provider settings. Other hosts use
+the generic hook contract; see [automatic capture](hooks.md). Native context replaces the explicit
+start-of-request command below, so the agent must not perform the lookup twice. Capture validates
+and indexes only touched pages; it does not trigger full maintenance or immediate Git backup.
+
 The default installation creates no Task Scheduler, launchd, cron, or systemd entry. Instead, the
 managed agent instructions run one provider-neutral `context "<request>"` command at the start of
 each request. It advances the interaction counter under a file lock, updates changed Markdown in

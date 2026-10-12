@@ -12,6 +12,10 @@ enhanced-second-brain context "<user request>"
 enhanced-second-brain okf migrate|audit
 enhanced-second-brain index update|query|status|rebuild
 enhanced-second-brain page read|upsert
+enhanced-second-brain hook run --provider codex|claude|generic
+enhanced-second-brain hooks install|status|uninstall --provider auto|codex|claude
+enhanced-second-brain checkpoint complete --turn-id ID --input FILE
+enhanced-second-brain checkpoint status --turn-id ID
 enhanced-second-brain usage record
 enhanced-second-brain score
 enhanced-second-brain prune candidates|apply|restore

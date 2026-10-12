@@ -26,6 +26,8 @@ jobs:
       - run: pytest
       - run: esb --vault examples/demo-vault okf audit
       - run: esb --vault examples/demo-vault benchmark examples/demo-vault/benchmark.json --max-p95-ms 2000
+      - run: python scripts/benchmark_hooks.py --pages 500 2500 --repeats 10
+        if: matrix.python == '3.13'
 
   smoke:
     runs-on: ubuntu-latest
@@ -37,7 +39,7 @@ jobs:
       - run: python -m venv /tmp/esb-smoke
       - run: /tmp/esb-smoke/bin/pip install .
       - run: /tmp/esb-smoke/bin/python -m enhanced_second_brain --version
-      - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install
+      - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain install --no-hooks
       - run: test -f /tmp/new-brain/AGENTS.md
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain context "installation verification"
       - run: /tmp/esb-smoke/bin/esb --vault /tmp/new-brain doctor
@@ -72,11 +74,12 @@ jobs:
           python -m zipfile -e "$PWD/dist/${{ matrix.asset }}" "$RUNNER_TEMP/esb-agent"
           engine="$RUNNER_TEMP/esb-agent/enhanced-second-brain/enhanced-second-brain"
           chmod +x "$engine"
-          "$engine" --vault "$RUNNER_TEMP/SecondBrain" install
+          "$engine" --vault "$RUNNER_TEMP/SecondBrain" install --no-hooks
           "$engine" --vault "$RUNNER_TEMP/SecondBrain" context "installation verification"
           "$engine" --vault "$RUNNER_TEMP/SecondBrain" doctor
           test -f "$RUNNER_TEMP/SecondBrain/AGENTS.md"
           test -z "$(find "$RUNNER_TEMP/esb-agent" -type f -name 'python*' -print -quit)"
+          python scripts/smoke_hooks.py "$engine"
       - name: Test the agent-driven Windows installation
         if: runner.os == 'Windows'
         shell: pwsh
@@ -86,7 +89,7 @@ jobs:
           New-Item -ItemType Directory -Path $appHome | Out-Null
           Expand-Archive -LiteralPath 'dist/${{ matrix.asset }}' -DestinationPath $appHome
           $engine = Join-Path $appHome 'enhanced-second-brain\enhanced-second-brain.exe'
-          & $engine --vault $vault install
+          & $engine --vault $vault install --no-hooks
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & $engine --vault $vault context 'installation verification'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -94,6 +97,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (-not (Test-Path (Join-Path $vault 'AGENTS.md'))) { exit 1 }
           if (Get-ChildItem -LiteralPath $appHome -Recurse -Filter 'python*.exe') { exit 1 }
+          python scripts/smoke_hooks.py $engine
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}

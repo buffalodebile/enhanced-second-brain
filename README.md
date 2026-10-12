@@ -24,6 +24,12 @@ self-contained application bundle, adopts or creates the knowledge folder, build
 persistent instructions, and runs a health check. Maintenance then happens naturally on future
 agent requests; no Windows task, cron job, or background service is created by default.
 
+The same bundle includes automatic end-of-turn capture hooks. Installation connects detected
+Codex and Claude Code applications while preserving their settings; other hook-capable agents
+can use the generic contract. The current agent merges durable knowledge into existing pages,
+and the hook provides one reminder if it forgets. Codex requires native review of new hooks.
+See [automatic capture and compatibility](docs/hooks.md).
+
 Installation also creates a private `<vault>/_local/.env` and `_local/documents/` by default.
 Credentials stay outside Git, search, agent context and portable exports. Existing local files
 are preserved on upgrade; new credential files receive restricted filesystem permissions.
@@ -142,6 +148,11 @@ tiny maintenance check, updates changed files in FTS5, searches the request, ret
 and records which results were shown. The agent then reads only relevant pages, records those it
 actually uses, and distills durable new knowledge back into the right page. Raw conversation text is
 not blindly copied into the knowledge base.
+
+When hooks are active, context is injected once at prompt submission. Before finishing, the agent
+submits a validated capture checkpoint or confirms that nothing durable was learned. Only changed
+pages are written and reindexed. The lightweight Stop check never scans the vault or launches a
+model; unresolved work remains visible at the next prompt. Full maintenance keeps its normal cadence.
 
 An injected search result counts `0.25`, an opened page counts `1`, and a page actually used in an
 answer counts `2`. Older activity gradually loses weight, so something that was popular years ago

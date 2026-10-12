@@ -8,6 +8,16 @@ from enhanced_second_brain.config import Settings
 from enhanced_second_brain.pages import dump_markdown
 
 
+@pytest.fixture(autouse=True)
+def isolated_agent_configs(tmp_path: Path, monkeypatch) -> None:
+    """Install tests must never modify the developer's real agent hooks."""
+    from enhanced_second_brain import hook_installation
+
+    monkeypatch.setattr(hook_installation, "_home", lambda: tmp_path / "agent-home")
+    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "agent-home" / ".codex"))
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path / "agent-home" / ".claude"))
+
+
 def write_page(
     vault: Path,
     relative: str,

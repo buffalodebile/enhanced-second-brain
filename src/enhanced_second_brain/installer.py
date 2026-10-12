@@ -22,11 +22,12 @@ def _instruction_block(vault: Path, executable: str) -> str:
     return f"""<!-- enhanced-second-brain:start -->
 ## Enhanced Second Brain — provider-neutral automatic context
 
-- At the start of every user request, run `{command} context "<the user's exact request>"`. This one command advances the lightweight maintenance cadence, incrementally updates FTS5, returns relevant pages, and records them as injected.
+- At the start of every user request, run `{command} context "<the user's exact request>"` unless an Enhanced Second Brain hook already injected context for this turn. This one command advances the lightweight maintenance cadence, incrementally updates FTS5, returns relevant pages, and records them as injected.
 - Use the returned context only when relevant. If the command reports maintenance work or an archive review, complete the included instruction before the final answer.
 - Read only relevant results with `{command} page read <path>`.
 - After using a page in an answer, run `{command} usage record cited <path>`.
-- After creating durable knowledge, use `{command} page upsert` and run `{command} reconcile`.
+- When a hook supplies a capture turn id, assess durable knowledge before the final answer and run `{command} checkpoint complete --turn-id ID --input <temporary-json-file>`, including an empty updates list when nothing should be retained. Search/read existing pages and merge before creating a new page. Keep decisions, resolved incidents, verified results, lasting preferences and reusable lessons; omit trivial exchanges and immediately reconstructible code details.
+- Without native hooks, run `{command} hook run --provider generic` with a begin event on stdin (session_id, stable event_id, prompt), follow its context and checkpoint instructions, then send an end event. The installing agent must connect this protocol to its own persistent instructions or hook mechanism. Use `page upsert` for explicit manual edits; touched pages are validated and indexed without full reconciliation.
 - If `context` reports an archive review, read every candidate and its relationships. Preserve rare durable decisions even when they are old. Then run `{command} maintenance review [only-the-pages-that-are-truly-safe-to-archive]`; an empty selection records that nothing should move.
 - When the user asks for a portable copy, run `{command} reconcile`, then `{command} bundle export <private-destination.zip>` and report its SHA-256.
 - The OKF Markdown files are authoritative. FTS5 is a local, disposable search index.
@@ -168,6 +169,7 @@ def install(
     *,
     automation: bool = False,
     dry_run_automation: bool = False,
+    hooks: bool = True,
 ) -> dict[str, Any]:
     vault = vault.expanduser().resolve()
     _initialize(vault)
@@ -207,4 +209,10 @@ def install(
         if automation
         else {"installed": False, "reason": "disabled"},
     }
+    if hooks:
+        from .hook_installation import configure
+
+        result["hooks"] = configure(settings)
+    else:
+        result["hooks"] = {"installed": False, "reason": "disabled"}
     return result

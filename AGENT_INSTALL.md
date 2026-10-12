@@ -51,7 +51,12 @@ plugin, or a database server. Do not add a dependency on one model provider.
    display its contents merely to verify installation. Keep credential values out of knowledge
    pages and prompts. On Windows, restrict the credential file's ACL to the current user and
    necessary system administrators; on macOS/Linux, new local files use owner-only permissions.
-8. Run `<application> --vault <vault> context "installation verification"`. Verify that its JSON
+8. Installation automatically connects detected Codex/Claude native hooks. Run `hooks status`,
+   preserve existing provider configuration, and report any native review or compatibility limit.
+   Codex requires the human to review new/changed hooks with `/hooks`; never alter trust records.
+   Do not claim activation before a real session confirms it. Other applications use the generic
+   contract in `docs/hooks.md`. Use `install --no-hooks` when hook installation is explicitly excluded.
+   Run `<application> --vault <vault> context "installation verification"`. Verify that its JSON
    contains `context` and `maintenance`, then verify that `doctor` reports `fts5: true`, a valid
    strict OKF audit, an existing index, and maintenance state. Do not create operating-system tasks
    unless the human explicitly requests unattended scheduling.

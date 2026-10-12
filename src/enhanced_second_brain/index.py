@@ -145,6 +145,31 @@ def update(settings: Settings, *, verify_hashes: bool = False) -> dict[str, int]
         connection.close()
 
 
+def update_paths(settings: Settings, paths: list[str]) -> None:
+    """Refresh one validated capture batch without walking unrelated pages."""
+    from .pages import is_knowledge_path, safe_relative
+
+    connection = connect(settings.vault)
+    try:
+        with connection:
+            for relative in paths:
+                path, relative = safe_relative(settings.vault, relative, must_exist=True)
+                if not is_knowledge_path(settings.vault, path):
+                    raise ValueError("Only knowledge pages can be indexed")
+                stat = path.stat()
+                connection.execute("DELETE FROM pages WHERE path = ?", (relative,))
+                connection.execute(
+                    "INSERT INTO pages(path,title,tags,description,headings,body) VALUES(?,?,?,?,?,?)",
+                    _page_row(path, settings.vault),
+                )
+                connection.execute(
+                    "INSERT OR REPLACE INTO documents(path,content_hash,mtime_ns,size) VALUES(?,?,?,?)",
+                    (relative, _hash(path), stat.st_mtime_ns, stat.st_size),
+                )
+    finally:
+        connection.close()
+
+
 def rebuild(settings: Settings) -> dict[str, int]:
     path = database_path(settings.vault)
     for suffix in ("", "-wal", "-shm"):

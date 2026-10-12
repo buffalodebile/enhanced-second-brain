@@ -5,9 +5,8 @@ from typing import Any
 
 from .config import Settings
 from .context import prepare as prepare_context
-from .index import query, results_as_dict, status, update
-from .okf import audit_page, migrated_metadata
-from .pages import dump_markdown, is_knowledge_path, parse_markdown, safe_relative
+from .index import query, results_as_dict, status, update_paths
+from .pages import is_knowledge_path, parse_markdown, safe_relative
 from .usage import record
 
 
@@ -17,10 +16,14 @@ def read_page(
     path, relative = safe_relative(settings.vault, raw_path, must_exist=True)
     if not is_knowledge_path(settings.vault, path):
         raise ValueError("Page must be a knowledge Markdown file")
-    page = parse_markdown(path, settings.vault)
+    snapshot = path.read_bytes()
+    page = parse_markdown(path, settings.vault, text=snapshot.decode("utf-8-sig"))
     if track:
         record(settings, "opened", relative)
-    return {"path": relative, "metadata": page.metadata, "body": page.body}
+    from .checkpoints import digest
+
+    return {"path": relative, "metadata": page.metadata, "body": page.body,
+            "sha256": digest(snapshot)}
 
 
 def upsert_page(
@@ -33,33 +36,28 @@ def upsert_page(
     tags: list[str] | None = None,
     source: str | None = None,
 ) -> dict[str, Any]:
+    from filelock import FileLock
+    from .atomic import write_text
+    from .checkpoints import _render, cache_root, digest
+
     path, relative = safe_relative(settings.vault, raw_path)
     if not is_knowledge_path(settings.vault, path):
         raise ValueError("Page must be a knowledge Markdown file")
-    old = parse_markdown(path, settings.vault) if path.exists() else None
-    now = datetime.now(UTC).isoformat(timespec="seconds")
-    seed = old or type("Seed", (), {"metadata": {}, "body": body, "path": path})()
-    metadata = migrated_metadata(seed, now=now)
-    metadata.update(
-        {
-            "title": title,
-            "description": description,
-            "summary": description,
-            "tags": tags if tags is not None else list(metadata.get("tags") or []),
-            "updated": now,
-            "generated": {"by": "process:enhanced-second-brain", "at": now},
-        }
-    )
-    if source:
-        metadata["sources"] = [{"resource": source}]
-    page_like = type("PageLike", (), {"metadata": metadata, "body": body})()
-    errors = audit_page(page_like, strict=True)
-    if errors:
-        raise ValueError("; ".join(errors))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(dump_markdown(metadata, body), encoding="utf-8", newline="\n")
-    update(settings)
-    return {"path": relative, "created": old is None}
+    with FileLock(str(cache_root(settings) / "writer.lock"), timeout=5):
+        exists = path.exists()
+        metadata = {"title": title, "description": description}
+        if tags is not None:
+            metadata["tags"] = tags
+        if source:
+            metadata["sources"] = [{"resource": source}]
+        item = _render(settings, {
+            "path": relative, "expected_sha256": digest(path.read_bytes()) if exists else None,
+            "metadata": metadata, "body": body,
+        }, datetime.now(UTC).isoformat(timespec="seconds"))
+        if item["changed"]:
+            write_text(path, item["content"])
+            update_paths(settings, [relative])
+        return {"path": relative, "created": not exists, "changed": item["changed"]}
 
 
 def search(

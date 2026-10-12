@@ -92,10 +92,10 @@ def iter_page_paths(vault: Path) -> Iterable[Path]:
                 yield path
 
 
-def parse_markdown(path: Path, vault: Path | None = None) -> Page:
+def parse_markdown(path: Path, vault: Path | None = None, *, text: str | None = None) -> Page:
     # Accept ordinary UTF-8 and strip the BOM commonly emitted by Windows
     # editors so a valid frontmatter fence is never mistaken for body text.
-    text = path.read_text(encoding="utf-8-sig")
+    text = path.read_text(encoding="utf-8-sig") if text is None else text.lstrip("\ufeff")
     metadata: dict[str, Any] = {}
     body = text
     if text.startswith(("---\n", "---\r\n")):

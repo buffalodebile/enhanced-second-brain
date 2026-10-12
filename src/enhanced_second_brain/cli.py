@@ -6,6 +6,7 @@ import sqlite3
 import sys
 from pathlib import Path
 from typing import Any
+from filelock import Timeout
 
 from . import __version__
 from .backup import backup
@@ -24,6 +25,7 @@ from .prune import candidates, restore
 from .service import read_page, upsert_page
 from .usage import record
 from .utility import persist_scores, scores
+from . import checkpoints, hook_installation, hooks
 
 
 def _json(value: Any) -> None:
@@ -87,6 +89,7 @@ def _doctor(settings: Settings) -> dict[str, Any]:
         "okf": audit_vault(settings.vault, strict=True),
         "index": status(settings),
         "maintenance": maintenance_status(settings),
+        "hooks": hook_installation.status(settings),
     }
 
 
@@ -102,11 +105,25 @@ def _parser() -> argparse.ArgumentParser:
     commands.add_parser("init")
     install = commands.add_parser("install")
     install.add_argument("--with-os-automation", action="store_true")
+    install.add_argument("--no-hooks", action="store_true")
     install.add_argument("--no-automation", action="store_true", help=argparse.SUPPRESS)
     install.add_argument(
         "--dry-run-automation", action="store_true", help=argparse.SUPPRESS
     )
     commands.add_parser("doctor")
+    hook = commands.add_parser("hook").add_subparsers(dest="hook_command", required=True)
+    hook_run = hook.add_parser("run")
+    hook_run.add_argument("--provider", required=True, choices=("codex", "claude", "generic"))
+    hook_run.add_argument("--installation-id", help=argparse.SUPPRESS)
+    checkpoint = commands.add_parser("checkpoint").add_subparsers(dest="checkpoint_command", required=True)
+    checkpoint_complete = checkpoint.add_parser("complete")
+    checkpoint_complete.add_argument("--turn-id", required=True)
+    checkpoint_complete.add_argument("--input", type=Path, required=True)
+    checkpoint_status = checkpoint.add_parser("status")
+    checkpoint_status.add_argument("--turn-id", required=True)
+    native = commands.add_parser("hooks").add_subparsers(dest="hooks_command", required=True)
+    for name in ("install", "status", "uninstall"):
+        native.add_parser(name).add_argument("--provider", default="auto", choices=("auto", "codex", "claude"))
     context = commands.add_parser(
         "context", help="Prepare one agent turn: maintenance, index, search, usage"
     )
@@ -196,12 +213,31 @@ def dispatch(args: argparse.Namespace) -> Any:
             Path(args.vault),
             automation=args.with_os_automation and not args.no_automation,
             dry_run_automation=args.dry_run_automation,
+            hooks=not args.no_hooks,
         )
     if args.command == "bundle" and args.bundle_command == "restore":
         if not args.vault:
             raise ESBError("bundle restore requires --vault NEW_PATH")
         return restore_bundle(args.archive, args.vault)
     settings = _settings(args)
+    if args.command == "hook":
+        try:
+            payload = json.loads(sys.stdin.read(1_000_001))
+            return hooks.run(settings, args.provider, payload)
+        except Exception:
+            # Do not leak prompts, transcript paths, credentials or native config
+            # contents through parse errors. A hook failure must not trap the agent.
+            warning = "Enhanced Second Brain hook failed; inspect hooks status and recover unfinished checkpoints."
+            return ({"action": "allow", "warning": warning} if args.provider == "generic"
+                    else {"systemMessage": warning})
+    if args.command == "checkpoint":
+        if args.checkpoint_command == "status":
+            return checkpoints.load_turn(settings, args.turn_id)
+        return checkpoints.complete(settings, args.turn_id, json.loads(args.input.read_text(encoding="utf-8-sig")))
+    if args.command == "hooks":
+        if args.hooks_command == "status":
+            return hook_installation.status(settings, args.provider)
+        return hook_installation.configure(settings, args.provider, uninstall=args.hooks_command == "uninstall")
     if args.command == "doctor":
         return _doctor(settings)
     if args.command == "context":
@@ -271,6 +307,9 @@ def dispatch(args: argparse.Namespace) -> Any:
 
 
 def main(argv: list[str] | None = None) -> int:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     try:
         result = dispatch(_parser().parse_args(argv))
         if result is not None:
@@ -280,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
         if isinstance(result, dict) and result.get("passed") is False:
             return 1
         return 0
-    except (ESBError, ValueError, FileNotFoundError, PermissionError) as exc:
+    except (ESBError, ValueError, OSError, Timeout) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
