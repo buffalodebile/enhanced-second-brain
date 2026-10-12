@@ -31,7 +31,9 @@ def measure(action, repeats):
 
 def run(pages, repeats, executable=None):
     with tempfile.TemporaryDirectory(prefix="esb-hook-benchmark-") as directory:
-        vault = Path(directory) / "vault"
+        # Canonicalize Windows short names and macOS /var -> /private/var before
+        # constructing Settings, as normal CLI configuration resolution does.
+        vault = (Path(directory) / "vault").resolve()
         write_test_vault(vault, pages)
         migrate_vault(vault, write=True)
         settings = Settings(vault=vault, config_file=None)
